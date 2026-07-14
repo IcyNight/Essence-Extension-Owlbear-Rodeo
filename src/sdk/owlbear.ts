@@ -1,4 +1,4 @@
-import OBR, { buildShape, isShape, Item, Shape } from "@owlbear-rodeo/sdk";
+import OBR, { isShape, Item, Shape } from "@owlbear-rodeo/sdk";
 import { Character, ConfluenceNotification, EssenceData, PlayerInfo, PlayerRole } from "../data/schema";
 
 export type SceneTokenInfo = {
@@ -11,26 +11,14 @@ const FORGE_UNIT_NAME_KEY = "com.battle-system.forge/name";
 const FORGE_CURRENT_TURN_KEY = "com.battle-system.forge/currturn";
 const FORGE_CURRENT_ROUND_KEY = "com.battle-system.forge/currround";
 const PINNED_ACTIVE_CONFLUENCE_ID = "com.codex.essence-powers/active-confluence";
-const CONFLUENCE_AREA_CHARACTER_KEY = "com.codex.essence-powers/confluence-area-character";
-const CONFLUENCE_AREA_TOOL_ID = "com.codex.essence-powers/tool/confluence-area";
-const CONFLUENCE_AREA_MODE_ID = "com.codex.essence-powers/tool/confluence-area-draw";
-const ACTION_ICON_URL = "https://icynight.github.io/Essence-Extension-Owlbear-Rodeo/action-e.svg";
 
-type CircleArea = {
+type ShapeArea = {
   character: Character;
   shape: Shape;
   center: { x: number; y: number };
-  radius: number;
+  width: number;
+  height: number;
 };
-
-type PendingConfluenceArea = {
-  character: Character;
-  start: { x: number; y: number } | null;
-  onComplete: (itemId: string) => void;
-};
-
-let confluenceAreaToolRegistered = false;
-let pendingConfluenceArea: PendingConfluenceArea | null = null;
 
 export async function waitForOwlbear(): Promise<boolean> {
   if (typeof window === "undefined") return false;
@@ -138,100 +126,32 @@ export function onForgeTurnChange(callback: (state: ForgeTurnState) => void): ()
   });
 }
 
-async function createConfluenceAreaCircleAt(character: Character, position: { x: number; y: number }, size: number): Promise<string> {
-  const dpi = await OBR.scene.grid.getDpi();
-  const item = buildShape()
-    .name(`${character.name} Confluence Area`)
-    .shapeType("CIRCLE")
-    .width(size)
-    .height(size)
-    .position(position)
-    .layer("DRAWING")
-    .fillColor("#8f382c")
-    .fillOpacity(0.18)
-    .strokeColor("#f0c15b")
-    .strokeOpacity(0.9)
-    .strokeWidth(Math.max(3, Math.round(dpi / 18)))
-    .strokeDash([12, 8])
-    .metadata({ [CONFLUENCE_AREA_CHARACTER_KEY]: character.id })
-    .build();
-  await OBR.scene.items.addItems([item]);
-  await OBR.player.select([item.id]);
-  return item.id;
-}
-
-export async function createConfluenceAreaCircle(character: Character): Promise<string> {
-  const [position, dpi] = await Promise.all([OBR.viewport.getPosition(), OBR.scene.grid.getDpi()]);
-  const size = Math.max(120, dpi * 4);
-  return createConfluenceAreaCircleAt(character, position, size);
-}
-
-async function registerConfluenceAreaTool(): Promise<void> {
-  if (confluenceAreaToolRegistered) return;
-  await OBR.tool.createMode({
-    id: CONFLUENCE_AREA_MODE_ID,
-    icons: [{ icon: ACTION_ICON_URL, label: "Draw confluence area" }],
-    cursors: [{ cursor: "crosshair" }],
-    preventDrag: { dragging: true },
-    onToolDragStart: (_context, event) => {
-      if (!pendingConfluenceArea) return;
-      pendingConfluenceArea.start = event.pointerPosition;
-    },
-    onToolDragEnd: (_context, event) => {
-      const pending = pendingConfluenceArea;
-      if (!pending?.start) return;
-      const start = pending.start;
-      const end = event.pointerPosition;
-      const width = Math.abs(end.x - start.x);
-      const height = Math.abs(end.y - start.y);
-      const size = Math.max(width, height, 40);
-      const position = {
-        x: Math.min(start.x, end.x),
-        y: Math.min(start.y, end.y),
-      };
-      pendingConfluenceArea = null;
-      void createConfluenceAreaCircleAt(pending.character, position, size).then((itemId) => pending.onComplete(itemId));
-    },
-    onToolDragCancel: () => {
-      if (pendingConfluenceArea) pendingConfluenceArea.start = null;
-    },
-  });
-  await OBR.tool.create({
-    id: CONFLUENCE_AREA_TOOL_ID,
-    icons: [{ icon: ACTION_ICON_URL, label: "Confluence Area" }],
-    defaultMode: CONFLUENCE_AREA_MODE_ID,
-  });
-  confluenceAreaToolRegistered = true;
-}
-
-export async function startConfluenceAreaDrawing(character: Character, onComplete: (itemId: string) => void): Promise<void> {
-  await registerConfluenceAreaTool();
-  pendingConfluenceArea = { character, start: null, onComplete };
-  await OBR.player.select([]);
-  await OBR.tool.activateTool(CONFLUENCE_AREA_TOOL_ID);
-  await OBR.tool.activateMode(CONFLUENCE_AREA_TOOL_ID, CONFLUENCE_AREA_MODE_ID);
-}
-
-export async function selectConfluenceAreaCircle(itemId: string): Promise<boolean> {
+export async function selectConfluenceAreaShape(itemId: string): Promise<boolean> {
   const [item] = await OBR.scene.items.getItems([itemId]);
-  if (!item || !isShape(item) || item.shapeType !== "CIRCLE") return false;
+  if (!item || !isShape(item)) return false;
   await OBR.player.select([itemId]);
   return true;
 }
 
-export async function getSelectedConfluenceAreaCircle(fallbackId?: string | null): Promise<string | null> {
+export async function getSelectedConfluenceAreaShape(fallbackId?: string | null): Promise<string | null> {
   const selection = await OBR.player.getSelection();
   const ids = [...(selection ?? []), ...(fallbackId ? [fallbackId] : [])];
   if (ids.length === 0) return null;
   const items = await OBR.scene.items.getItems(ids);
-  const item = items.find((candidate) => isShape(candidate) && candidate.shapeType === "CIRCLE");
+  const item = items.find((candidate) => isShape(candidate));
   return item?.id ?? null;
 }
 
-function pointInCircle(point: { x: number; y: number }, area: CircleArea): boolean {
-  const dx = point.x - area.center.x;
-  const dy = point.y - area.center.y;
-  return Math.sqrt(dx * dx + dy * dy) <= area.radius;
+function pointInShapeArea(point: { x: number; y: number }, area: ShapeArea): boolean {
+  const dx = Math.abs(point.x - area.center.x);
+  const dy = Math.abs(point.y - area.center.y);
+  if (area.shape.shapeType === "CIRCLE") {
+    const radiusX = area.width / 2;
+    const radiusY = area.height / 2;
+    if (radiusX <= 0 || radiusY <= 0) return false;
+    return (dx * dx) / (radiusX * radiusX) + (dy * dy) / (radiusY * radiusY) <= 1;
+  }
+  return dx <= area.width / 2 && dy <= area.height / 2;
 }
 
 async function itemCenter(item: Item): Promise<{ x: number; y: number }> {
@@ -239,14 +159,14 @@ async function itemCenter(item: Item): Promise<{ x: number; y: number }> {
   return bounds.center;
 }
 
-async function getSavedCircleAreas(characters: Character[]): Promise<CircleArea[]> {
+async function getSavedShapeAreas(characters: Character[]): Promise<ShapeArea[]> {
   const active = characters.filter(
     (character) => character.confluenceRoundsRemaining > 0 && character.confluenceAreaSaved && character.confluenceAreaItemId,
   );
   if (active.length === 0) return [];
   const ids = active.map((character) => character.confluenceAreaItemId as string);
   const items = await OBR.scene.items.getItems(ids);
-  const areas: CircleArea[] = [];
+  const areas: ShapeArea[] = [];
   for (const character of active) {
     const item = items.find((candidate) => candidate.id === character.confluenceAreaItemId);
     if (!item || !isShape(item) || item.shapeType !== "CIRCLE") continue;
@@ -255,7 +175,8 @@ async function getSavedCircleAreas(characters: Character[]): Promise<CircleArea[
       character,
       shape: item,
       center: bounds.center,
-      radius: Math.min(bounds.width, bounds.height) / 2,
+      width: bounds.width,
+      height: bounds.height,
     });
   }
   return areas;
@@ -275,10 +196,10 @@ export async function createConfluenceAreaNotifications(
   if (!ready) return [];
   const [tokenItem] = await OBR.scene.items.getItems([previousTurnTokenId]);
   if (!tokenItem) return [];
-  const areas = await getSavedCircleAreas(Object.values(data.characters));
+  const areas = await getSavedShapeAreas(Object.values(data.characters));
   if (areas.length === 0) return [];
   const tokenCenter = await itemCenter(tokenItem);
-  if (!areas.some((area) => pointInCircle(tokenCenter, area))) return [];
+  if (!areas.some((area) => pointInShapeArea(tokenCenter, area))) return [];
 
   const token = await getSceneTokenInfo(previousTurnTokenId);
   const ownerPlayerId = notificationOwnerForToken(token, data);

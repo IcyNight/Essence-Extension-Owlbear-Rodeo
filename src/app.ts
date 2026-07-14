@@ -8,15 +8,14 @@ import {
   getSelectedTokenId,
   getForgeTurnState,
   createConfluenceAreaNotifications,
-  getSelectedConfluenceAreaCircle,
+  getSelectedConfluenceAreaShape,
   onPartyChange,
   onForgeTurnChange,
   onPlayerChange,
   onSelectionChange,
   openPinnedActiveConfluence,
-  selectConfluenceAreaCircle,
+  selectConfluenceAreaShape,
   showConfluenceReminder,
-  startConfluenceAreaDrawing,
 } from "./sdk/owlbear";
 import { onDataChange, readData, updateData, writeData } from "./sdk/storage";
 import { playerView } from "./ui/playerView";
@@ -43,6 +42,7 @@ type AppState = {
   selectedGmId: string | null;
   draftCharacter: Character;
   pendingTokenCharacterId: string | null;
+  pendingConfluenceAreaCharacterId: string | null;
   lastForgeTurnTokenId: string | null;
   activeConfluenceOpen: boolean;
   message: string;
@@ -71,6 +71,7 @@ export class EssencePowersApp {
       selectedGmId: null,
       draftCharacter: createBlankCharacter(),
       pendingTokenCharacterId: null,
+      pendingConfluenceAreaCharacterId: null,
       lastForgeTurnTokenId: null,
       activeConfluenceOpen: false,
       message: "",
@@ -112,6 +113,17 @@ export class EssencePowersApp {
   }
 
   private async capturePendingTokenSelection(selection: string[] | undefined): Promise<void> {
+    if (this.state.pendingConfluenceAreaCharacterId && selection?.[0]) {
+      const characterId = this.state.pendingConfluenceAreaCharacterId;
+      this.state.pendingConfluenceAreaCharacterId = null;
+      try {
+        await this.saveConfluenceAreaSelection(characterId, selection[0]);
+      } catch (error) {
+        this.setMessage("", error instanceof Error ? error.message : "Unable to save confluence area.");
+      }
+      return;
+    }
+
     if (!this.state.pendingTokenCharacterId || !selection?.[0]) return;
     const tokenId = selection[0];
     const characterId = this.state.pendingTokenCharacterId;
@@ -337,38 +349,33 @@ export class EssencePowersApp {
       throw new Error("Use a confluence power before selecting an area.");
     }
 
-    if (!character.confluenceAreaItemId || character.confluenceAreaSaved) {
-      let areaItemId = character.confluenceAreaItemId;
-      if (areaItemId) {
-        const selected = await selectConfluenceAreaCircle(areaItemId);
-        if (!selected) areaItemId = null;
-      }
-      if (!areaItemId) {
-        await startConfluenceAreaDrawing(character, (drawnAreaItemId) => {
-          void updateData((data) =>
-            updateCharacterResource(data, this.state.actor, characterId, (item) => ({
-              ...item,
-              confluenceAreaItemId: drawnAreaItemId,
-              confluenceAreaSaved: false,
-            })),
-          ).then(() => this.setMessage("Confluence circle drawn. Press Select Area again to save it."));
-        });
-        this.setMessage("Draw the confluence circle on the scene, then press Select Area again to save it.");
-        return;
-      }
-      await updateData((data) =>
-        updateCharacterResource(data, this.state.actor, characterId, (item) => ({
-          ...item,
-          confluenceAreaItemId: areaItemId,
-          confluenceAreaSaved: false,
-        })),
-      );
-      this.setMessage("Move or resize the confluence circle, then press Select Area again to save it.");
+    const selectedAreaItemId = await getSelectedConfluenceAreaShape();
+    if (selectedAreaItemId) {
+      await this.saveConfluenceAreaSelection(characterId, selectedAreaItemId);
       return;
     }
 
-    const selectedAreaItemId = await getSelectedConfluenceAreaCircle(character.confluenceAreaItemId);
-    if (!selectedAreaItemId) throw new Error("Select the confluence circle before saving it.");
+    if (character.confluenceAreaItemId && character.confluenceAreaSaved) {
+      const selected = await selectConfluenceAreaShape(character.confluenceAreaItemId);
+      if (selected) {
+        await updateData((data) =>
+          updateCharacterResource(data, this.state.actor, characterId, (item) => ({
+            ...item,
+            confluenceAreaSaved: false,
+          })),
+        );
+        this.setMessage("Current confluence area selected. Choose another shape, or press Select Area again to re-save it.");
+        return;
+      }
+    }
+
+    this.state.pendingConfluenceAreaCharacterId = characterId;
+    this.setMessage("Area pick mode active. Select an existing Owlbear shape to use as the confluence area.");
+  }
+
+  private async saveConfluenceAreaSelection(characterId: string, areaItemId: string): Promise<void> {
+    const selectedAreaItemId = await getSelectedConfluenceAreaShape(areaItemId);
+    if (!selectedAreaItemId) throw new Error("Select an Owlbear shape to use as the confluence area.");
     await updateData((data) =>
       updateCharacterResource(data, this.state.actor, characterId, (item) => ({
         ...item,
