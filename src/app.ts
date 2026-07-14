@@ -367,9 +367,10 @@ export class EssencePowersApp {
 
   private async assignTokenToCharacter(characterId: string | undefined, tokenId: string): Promise<void> {
     const token = await getSceneTokenInfo(tokenId);
-    const ownerPlayerId = this.state.players.some((player) => player.id === token.ownerPlayerId)
-      ? token.ownerPlayerId
-      : "";
+    const ownerPlayerId = token.ownerPlayerId;
+    if (ownerPlayerId && !this.state.players.some((player) => player.id === ownerPlayerId)) {
+      this.state.players = [...this.state.players, { id: ownerPlayerId, name: "Token Owner" }];
+    }
     const form = qs<HTMLFormElement>(this.root, '[data-form="character"]');
     const tokenInput = form?.querySelector<HTMLInputElement>('input[name="tokenId"]');
     const nameInput = form?.querySelector<HTMLInputElement>('input[name="name"]');
@@ -377,7 +378,12 @@ export class EssencePowersApp {
     const visibleInput = form?.querySelector<HTMLInputElement>('input[name="visibleToPlayers"]');
     if (tokenInput) tokenInput.value = token.id;
     if (nameInput && token.name) nameInput.value = token.name;
-    if (ownerInput && ownerPlayerId) ownerInput.value = ownerPlayerId;
+    if (ownerInput && ownerPlayerId) {
+      if (![...ownerInput.options].some((option) => option.value === ownerPlayerId)) {
+        ownerInput.add(new Option("Token Owner", ownerPlayerId));
+      }
+      ownerInput.value = ownerPlayerId;
+    }
     if (visibleInput && ownerPlayerId) visibleInput.checked = true;
 
     if (!form) {

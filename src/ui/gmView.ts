@@ -9,6 +9,7 @@ function option(value: string, label: string, selected?: boolean): string {
 }
 
 function characterForm(data: EssenceData, players: PlayerInfo[], character: Character = createBlankCharacter()): string {
+  const ownerInPlayerList = players.some((player) => player.id === character.ownerPlayerId);
   const essenceOptions = (selected = "") =>
     option("", "Empty Essence Slot", !selected) +
     Object.values(data.essences)
@@ -23,6 +24,11 @@ function characterForm(data: EssenceData, players: PlayerInfo[], character: Char
           <select name="ownerPlayerId">
             ${option("", "Unassigned", !character.ownerPlayerId)}
             ${players.map((player) => option(player.id, player.name, player.id === character.ownerPlayerId)).join("")}
+            ${
+              character.ownerPlayerId && !ownerInPlayerList
+                ? option(character.ownerPlayerId, "Token Owner", true)
+                : ""
+            }
           </select>
         </label>
       </div>
