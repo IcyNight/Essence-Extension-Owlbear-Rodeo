@@ -117,8 +117,9 @@ export class EssencePowersApp {
   }
 
   private render(): void {
-    const visible = getVisibleCharacters(this.state.actor, this.state.data);
-    if (!this.state.selectedCharacterId && visible[0]) {
+    const isGm = this.state.actor.role === "GM";
+    const visible = isGm ? [] : getVisibleCharacters(this.state.actor, this.state.data);
+    if (!isGm && !this.state.selectedCharacterId && visible[0]) {
       this.state.selectedCharacterId = visible[0].id;
     }
 
@@ -126,16 +127,16 @@ export class EssencePowersApp {
       <main class="app-shell">
         <header class="app-header">
           <div>
-            <p>${this.state.actor.role === "GM" ? "GM Console" : this.state.playerName}</p>
+            <p>${isGm ? "GM Console" : this.state.playerName}</p>
             <h1>Essence Powers</h1>
           </div>
           <span class="role">${this.state.actor.role}</span>
         </header>
         ${this.state.error ? `<div class="toast error" role="alert">${this.state.error}</div>` : ""}
         ${this.state.message ? `<div class="toast" role="status">${this.state.message}</div>` : ""}
-        ${playerView(this.state.data, this.state.actor, this.state.selectedCharacterId)}
+        ${isGm ? "" : playerView(this.state.data, this.state.actor, this.state.selectedCharacterId)}
         ${
-          this.state.actor.role === "GM"
+          isGm
             ? gmView(
                 this.state.data,
                 this.state.players,
