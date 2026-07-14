@@ -376,16 +376,27 @@ export class EssencePowersApp {
     if (!form) {
       if (!characterId) return;
       await updateData((data) => {
-        const character = data.characters[characterId];
-        if (!character) throw new Error("Character not found. Save the character before linking a token.");
+        const existing = data.characters[characterId];
+        const base =
+          existing ??
+          (this.state.draftCharacter.id === characterId
+            ? this.state.draftCharacter
+            : { ...createBlankCharacter(), id: characterId });
+        const character = {
+          ...base,
+          name: token.name || base.name,
+          tokenId: token.id,
+        };
         return saveCharacter(
           data,
           this.state.actor,
-          { ...character, name: token.name || character.name, tokenId: token.id },
+          character,
           this.state.players.map((player) => player.id),
         );
       });
-      this.setMessage(token.name ? `Linked token: ${token.name}.` : "Token linked to character.");
+      this.state.selectedGmId = characterId;
+      this.state.draftCharacter = createBlankCharacter();
+      this.setMessage(token.name ? `Created character from token: ${token.name}.` : "Token linked to character.");
       return;
     }
 

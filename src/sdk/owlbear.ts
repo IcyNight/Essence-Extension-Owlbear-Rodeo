@@ -6,6 +6,8 @@ export type SceneTokenInfo = {
   name: string;
 };
 
+const FORGE_UNIT_NAME_KEY = "com.battle-system.forge/name";
+
 export async function waitForOwlbear(): Promise<boolean> {
   if (typeof window === "undefined") return false;
   if (!window.location.ancestorOrigins && window.self === window.top) {
@@ -54,9 +56,12 @@ export async function getSceneTokenInfo(itemId: string): Promise<SceneTokenInfo>
     const ready = await OBR.scene.isReady();
     if (!ready) return { id: itemId, name: "" };
     const [item] = await OBR.scene.items.getItems([itemId]);
+    const metadata = item?.metadata as Record<string, unknown> | undefined;
+    const forgeName = metadata ? metadata[FORGE_UNIT_NAME_KEY] : "";
+    const itemName = typeof item?.name === "string" ? item.name.trim() : "";
     return {
       id: itemId,
-      name: typeof item?.name === "string" ? item.name.trim() : "",
+      name: typeof forgeName === "string" && forgeName.trim() ? forgeName.trim() : itemName,
     };
   } catch {
     return { id: itemId, name: "" };
