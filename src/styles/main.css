@@ -313,7 +313,6 @@ body.pinned-mode .loading {
   position: fixed;
   inset: 0;
   background: transparent;
-  pointer-events: none;
 }
 
 .pinned-confluence {
@@ -326,7 +325,6 @@ body.pinned-mode .loading {
   background: rgba(18, 15, 13, 0.96);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   overflow: hidden;
-  pointer-events: auto;
 }
 
 .pinned-confluence header {
