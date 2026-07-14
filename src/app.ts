@@ -2,7 +2,7 @@ import { Character, Confluence, Essence, EssenceData, PlayerInfo, Power, createE
 import { createSampleData } from "./data/sampleData";
 import { numberValue, textValue, bindClick, bindSubmit, qs } from "./ui/dom";
 import { Actor, getVisibleCharacters } from "./sdk/permissions";
-import { getPlayers, getSelectedTokenId, onPartyChange, onPlayerChange } from "./sdk/owlbear";
+import { getPlayers, getSelectedTokenId, onPartyChange, onPlayerChange, onSelectionChange } from "./sdk/owlbear";
 import { onDataChange, readData, updateData, writeData } from "./sdk/storage";
 import { playerView } from "./ui/playerView";
 import { gmView } from "./ui/gmView";
@@ -19,6 +19,7 @@ type AppState = {
   selectedCharacterId: string | null;
   gmTab: string;
   selectedGmId: string | null;
+  pendingTokenCharacterId: string | null;
   message: string;
   error: string;
 };
@@ -41,6 +42,7 @@ export class EssencePowersApp {
       selectedCharacterId: null,
       gmTab: localStorage.getItem("essence-powers.tab") ?? "characters",
       selectedGmId: null,
+      pendingTokenCharacterId: null,
       message: "",
       error: "",
     };
@@ -54,6 +56,7 @@ export class EssencePowersApp {
         this.render();
       }),
       onPlayerChange(() => this.refreshPlayers()),
+      onSelectionChange((selection) => this.capturePendingTokenSelection(selection)),
       onPartyChange(() => this.refreshPlayers()),
     );
   }
@@ -71,6 +74,20 @@ export class EssencePowersApp {
     this.state.message = message;
     this.state.error = error;
     this.render();
+  }
+
+  private async capturePendingTokenSelection(selection: string[] | undefined): Promise<void> {
+    if (!this.state.pendingTokenCharacterId || !selection?.[0]) return;
+    const tokenId = selection[0];
+    const characterId = this.state.pendingTokenCharacterId;
+    this.state.pendingTokenCharacterId = null;
+
+    try {
+      await this.assignTokenToCharacter(characterId, tokenId);
+      this.setMessage("Token linked to character.");
+    } catch (error) {
+      this.setMessage("", error instanceof Error ? error.message : "Unable to link token.");
+    }
   }
 
   private render(): void {
@@ -322,11 +339,26 @@ export class EssencePowersApp {
 
   private async useSelectedToken(characterId?: string): Promise<void> {
     const tokenId = await getSelectedTokenId();
-    if (!tokenId) throw new Error("Select a scene token first.");
+    if (!tokenId) {
+      if (!characterId) throw new Error("Save the character first, then link a token.");
+      this.state.pendingTokenCharacterId = characterId;
+      this.setMessage("Token pick mode active. Click a token in the Owlbear scene to link it.");
+      return;
+    }
+    await this.assignTokenToCharacter(characterId, tokenId);
+    this.setMessage("Token linked to character.");
+  }
+
+  private async assignTokenToCharacter(characterId: string | undefined, tokenId: string): Promise<void> {
     const form = qs<HTMLFormElement>(this.root, '[data-form="character"]');
     const input = form?.querySelector<HTMLInputElement>('input[name="tokenId"]');
     if (input) input.value = tokenId;
-    this.setMessage(`Selected token linked to ${characterId ?? "character draft"}.`);
+    if (!characterId) return;
+    await updateData((data) => {
+      const character = data.characters[characterId];
+      if (!character) throw new Error("Character not found. Save the character before linking a token.");
+      return saveCharacter(data, this.state.actor, { ...character, tokenId }, this.state.players.map((player) => player.id));
+    });
   }
 
   private editPowerList(button: HTMLButtonElement): void {

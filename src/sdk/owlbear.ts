@@ -48,6 +48,12 @@ export function onPlayerChange(callback: () => void): () => void {
   return OBR.player.onChange(callback);
 }
 
+export function onSelectionChange(callback: (selection: string[] | undefined) => void): () => void {
+  return OBR.player.onChange((player: any) => {
+    callback(player.selection);
+  });
+}
+
 export function onPartyChange(callback: () => void): () => void {
   return OBR.party.onChange(callback);
 }

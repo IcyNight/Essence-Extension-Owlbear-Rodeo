@@ -30,7 +30,7 @@ function characterForm(data: EssenceData, players: PlayerInfo[], character: Char
         <label>Token ID<input name="tokenId" value="${escapeHtml(character.tokenId ?? "")}" /></label>
         <button class="secondary align-end" type="button" data-action="selected-token" data-target="${escapeHtml(
           character.id,
-        )}">Use Selected Token</button>
+        )}">Link Scene Token</button>
       </div>
       <div class="grid three">
         <label>Essence 1<select name="essence1">${essenceOptions(character.essenceIds[0])}</select></label>
