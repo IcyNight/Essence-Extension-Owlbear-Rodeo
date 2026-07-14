@@ -208,6 +208,7 @@ export class EssencePowersApp {
     bindSubmit(this.root, '[data-form="character"]', (form) => this.saveCharacterForm(form));
     bindSubmit(this.root, '[data-form="essence"]', (form) => this.saveLibraryForm(form, "essence"));
     bindSubmit(this.root, '[data-form="confluence"]', (form) => this.saveLibraryForm(form, "confluence"));
+    this.bindLibraryAutosave();
   }
 
   private async handleAction(button: HTMLButtonElement): Promise<void> {
@@ -453,6 +454,13 @@ export class EssencePowersApp {
   }
 
   private async saveLibraryForm(form: HTMLFormElement, kind: "essence" | "confluence"): Promise<void> {
+    const next = await this.persistLibraryForm(form, kind);
+    this.state.data = next;
+    this.state.selectedGmId = textValue(new FormData(form), "id");
+    this.setMessage(`${kind === "essence" ? "Essence" : "Confluence"} saved.`);
+  }
+
+  private async persistLibraryForm(form: HTMLFormElement, kind: "essence" | "confluence"): Promise<EssenceData> {
     const formData = new FormData(form);
     const item = {
       id: textValue(formData, "id"),
@@ -461,12 +469,27 @@ export class EssencePowersApp {
       powers: this.powersFromForm(formData).filter((power) => power.name),
     };
     if (kind === "essence") {
-      await updateData((data) => saveEssence(data, this.state.actor, item as Essence));
-    } else {
-      await updateData((data) => saveConfluence(data, this.state.actor, item as Confluence));
+      return updateData((data) => saveEssence(data, this.state.actor, item as Essence));
     }
-    this.state.selectedGmId = item.id;
-    this.setMessage(`${kind === "essence" ? "Essence" : "Confluence"} saved.`);
+    return updateData((data) => saveConfluence(data, this.state.actor, item as Confluence));
+  }
+
+  private bindLibraryAutosave(): void {
+    this.root.querySelectorAll<HTMLFormElement>('[data-form="essence"], [data-form="confluence"]').forEach((form) => {
+      form.addEventListener("change", () => {
+        const kind = form.dataset.form === "confluence" ? "confluence" : "essence";
+        const id = textValue(new FormData(form), "id");
+        const exists = kind === "essence" ? Boolean(this.state.data.essences[id]) : Boolean(this.state.data.confluences[id]);
+        if (!exists) return;
+        void this.persistLibraryForm(form, kind)
+          .then((next) => {
+            this.state.data = next;
+          })
+          .catch((error) => {
+            this.setMessage("", error instanceof Error ? error.message : "Unable to publish library changes.");
+          });
+      });
+    });
   }
 
   private async deleteCharacter(id?: string): Promise<void> {
