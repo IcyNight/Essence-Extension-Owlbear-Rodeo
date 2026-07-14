@@ -243,6 +243,12 @@ p {
   padding-inline: 0;
 }
 
+.stepper .use-resource {
+  width: auto;
+  min-width: 64px;
+  padding-inline: 0.7rem;
+}
+
 .lr-button,
 .primary {
   border-color: #d8a24b;

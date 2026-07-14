@@ -223,6 +223,9 @@ export class EssencePowersApp {
   private async adjustResource(button: HTMLButtonElement): Promise<void> {
     const resource = button.dataset.resource as "essencePoints" | "confluenceUses";
     const delta = Number(button.dataset.delta ?? 0);
+    if (this.state.actor.role !== "GM" && delta !== -1) {
+      throw new Error("Players can only use one resource at a time.");
+    }
     await updateData((data) =>
       updateCharacterResource(data, this.state.actor, this.currentCharacterId(), (character) => ({
         ...character,
@@ -235,6 +238,9 @@ export class EssencePowersApp {
   }
 
   private async longRest(): Promise<void> {
+    if (this.state.actor.role !== "GM") {
+      throw new Error("Only the GM can restore resources with LR.");
+    }
     if (!confirm("Restore all essence points and confluence uses?")) return;
     await updateData((data) =>
       updateCharacterResource(data, this.state.actor, this.currentCharacterId(), (character) => longRest(character)),

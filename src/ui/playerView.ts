@@ -61,6 +61,7 @@ export function playerView(data: EssenceData, actor: Actor, selectedCharacterId:
   }
 
   const character = characters.find((item) => item.id === selectedCharacterId) ?? characters[0];
+  const canRestoreResources = actor.role === "GM";
   const selector =
     characters.length > 1
       ? `
@@ -91,9 +92,9 @@ export function playerView(data: EssenceData, actor: Actor, selectedCharacterId:
         ${confluenceSlot(data, character)}
       </div>
       <footer class="resource-dock">
-        ${resourceCounter("Essence Points", character.essencePoints, "essencePoints")}
-        ${resourceCounter("Confluence Uses", character.confluenceUses, "confluenceUses")}
-        <button class="lr-button" type="button" data-action="long-rest">LR</button>
+        ${resourceCounter("Essence Points", character.essencePoints, "essencePoints", canRestoreResources)}
+        ${resourceCounter("Confluence Uses", character.confluenceUses, "confluenceUses", canRestoreResources)}
+        ${canRestoreResources ? `<button class="lr-button" type="button" data-action="long-rest">LR</button>` : ""}
       </footer>
     </section>
   `;
