@@ -10,7 +10,6 @@ export type SceneTokenInfo = {
 const FORGE_UNIT_NAME_KEY = "com.battle-system.forge/name";
 const FORGE_CURRENT_TURN_KEY = "com.battle-system.forge/currturn";
 const FORGE_CURRENT_ROUND_KEY = "com.battle-system.forge/currround";
-const PINNED_ACTIVE_CONFLUENCE_ID = "com.codex.essence-powers/active-confluence";
 
 type ShapeArea = {
   character: Character;
@@ -234,31 +233,6 @@ export async function createConfluenceAreaNotifications(
 export async function showConfluenceReminder(tokenNames: string[]): Promise<void> {
   const names = [...new Set(tokenNames)].join(", ");
   await OBR.notification.show(`Remember Confluence effect in the area: ${names}.`, "WARNING");
-}
-
-export async function openPinnedActiveConfluence(): Promise<void> {
-  const viewportWidth = await OBR.viewport.getWidth();
-  const url = new URL(window.location.href);
-  url.searchParams.set("view", "active-confluence");
-  url.searchParams.set("pinned", "true");
-  await OBR.modal.close(PINNED_ACTIVE_CONFLUENCE_ID).catch(() => undefined);
-  await OBR.popover.open({
-    id: PINNED_ACTIVE_CONFLUENCE_ID,
-    url: `${url.pathname}${url.search}`,
-    height: 240,
-    width: 350,
-    anchorPosition: { top: 50, left: viewportWidth - 70 },
-    anchorReference: "POSITION",
-    anchorOrigin: { vertical: "CENTER", horizontal: "RIGHT" },
-    transformOrigin: { vertical: "CENTER", horizontal: "RIGHT" },
-    hidePaper: true,
-    disableClickAway: true,
-  });
-}
-
-export async function closePinnedActiveConfluence(): Promise<void> {
-  await OBR.popover.close(PINNED_ACTIVE_CONFLUENCE_ID).catch(() => undefined);
-  await OBR.modal.close(PINNED_ACTIVE_CONFLUENCE_ID).catch(() => undefined);
 }
 
 export { OBR };

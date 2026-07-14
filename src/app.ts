@@ -13,7 +13,6 @@ import {
   onForgeTurnChange,
   onPlayerChange,
   onSelectionChange,
-  openPinnedActiveConfluence,
   onSceneReadyChange,
   selectConfluenceAreaShape,
   showConfluenceReminder,
@@ -46,7 +45,6 @@ type AppState = {
   pendingConfluenceAreaCharacterId: string | null;
   lastForgeTurnTokenId: string | null;
   lastForgeRound: number;
-  activeConfluenceOpen: boolean;
   message: string;
   error: string;
 };
@@ -76,7 +74,6 @@ export class EssencePowersApp {
       pendingConfluenceAreaCharacterId: null,
       lastForgeTurnTokenId: null,
       lastForgeRound: 1,
-      activeConfluenceOpen: false,
       message: "",
       error: "",
     };
@@ -98,6 +95,7 @@ export class EssencePowersApp {
       onSelectionChange((selection) => this.capturePendingTokenSelection(selection)),
       onPartyChange(() => this.refreshPlayers()),
       onForgeTurnChange((state) => this.handleForgeTurnChange(state.currentTurnTokenId, state.currentRound)),
+      this.pollForgeTurnState(),
       onSceneReadyChange((ready) => {
         if (!ready) return;
         getForgeTurnState().then((state) => {
@@ -174,7 +172,6 @@ export class EssencePowersApp {
                 this.state.gmTab,
                 this.state.selectedGmId,
                 this.state.draftCharacter,
-                this.state.activeConfluenceOpen,
               )
             : ""
         }
@@ -219,8 +216,6 @@ export class EssencePowersApp {
       else if (action === "resource") await this.adjustResource(button);
       else if (action === "long-rest") await this.longRest();
       else if (action === "confluence-area") await this.selectConfluenceArea();
-      else if (action === "active-confluence") this.toggleActiveConfluence();
-      else if (action === "pin-active-confluence") await this.pinActiveConfluence();
       else if (action === "delete-character") await this.deleteCharacter(button.dataset.id);
       else if (action === "reset-character") await this.resetCharacter(button.dataset.id);
       else if (action === "delete-essence") await this.deleteEssence(button.dataset.id);
@@ -297,16 +292,6 @@ export class EssencePowersApp {
     );
   }
 
-  private toggleActiveConfluence(): void {
-    this.state.activeConfluenceOpen = !this.state.activeConfluenceOpen;
-    this.render();
-  }
-
-  private async pinActiveConfluence(): Promise<void> {
-    if (this.state.actor.role !== "GM") return;
-    await openPinnedActiveConfluence();
-  }
-
   private async handleForgeTurnChange(currentTurnTokenId: string | null, currentRound: number): Promise<void> {
     const previousTurnTokenId = this.state.lastForgeTurnTokenId;
     const previousRound = this.state.lastForgeRound;
@@ -329,6 +314,14 @@ export class EssencePowersApp {
         ].slice(-30),
       };
     });
+  }
+
+  private pollForgeTurnState(): () => void {
+    const interval = window.setInterval(() => {
+      if (this.state.actor.role !== "GM") return;
+      getForgeTurnState().then((state) => this.handleForgeTurnChange(state.currentTurnTokenId, state.currentRound));
+    }, 1500);
+    return () => window.clearInterval(interval);
   }
 
   private seenConfluenceNotificationIds(): Set<string> {
