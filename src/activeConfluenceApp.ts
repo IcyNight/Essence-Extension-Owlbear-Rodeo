@@ -4,9 +4,7 @@ import {
   closePinnedActiveConfluence,
   getForgeTurnState,
   onForgeTurnChange,
-  openPinnedActiveConfluence,
   PinnedActiveConfluenceBounds,
-  resizePinnedActiveConfluence,
 } from "./sdk/owlbear";
 import { onDataChange, readData, updateData } from "./sdk/storage";
 import { applyForgeTurnConfluenceTick } from "./services/resourceService";
@@ -93,18 +91,34 @@ export class ActiveConfluenceApp {
 
   private render(): void {
     this.root.innerHTML = `
-      <main class="pinned-confluence">
-        <header>
-          <h1>Active confluence</h1>
-          <button type="button" data-action="close-pinned" aria-label="Close pinned tracker">x</button>
-        </header>
-        <section class="active-confluence-list">
-          ${activeConfluenceList(this.state.data)}
+      <main class="pinned-overlay">
+        <section class="pinned-confluence" style="${this.panelStyle()}">
+          <header>
+            <h1>Active confluence</h1>
+            <button type="button" data-action="close-pinned" aria-label="Close pinned tracker">x</button>
+          </header>
+          <div class="active-confluence-list">
+            ${activeConfluenceList(this.state.data)}
+          </div>
+          <div class="resize-handle" title="Resize"></div>
         </section>
-        <div class="resize-handle" title="Resize"></div>
       </main>
     `;
     this.bindEvents();
+  }
+
+  private panelStyle(): string {
+    const { left, top, width, height } = this.state.bounds;
+    return `left:${left}px;top:${top}px;width:${width}px;height:${height}px;`;
+  }
+
+  private applyPanelBounds(): void {
+    const panel = this.root.querySelector<HTMLElement>(".pinned-confluence");
+    if (!panel) return;
+    panel.style.left = `${this.state.bounds.left}px`;
+    panel.style.top = `${this.state.bounds.top}px`;
+    panel.style.width = `${this.state.bounds.width}px`;
+    panel.style.height = `${this.state.bounds.height}px`;
   }
 
   private bindEvents(): void {
@@ -123,8 +137,7 @@ export class ActiveConfluenceApp {
     const startY = event.clientY;
     const startBounds = { ...this.state.bounds };
 
-    const onPointerUp = (moveEvent: PointerEvent) => {
-      window.removeEventListener("pointerup", onPointerUp);
+    const onPointerMove = (moveEvent: PointerEvent) => {
       const next = {
         ...startBounds,
         left: Math.max(0, startBounds.left + moveEvent.clientX - startX),
@@ -132,9 +145,15 @@ export class ActiveConfluenceApp {
       };
       this.state.bounds = next;
       saveBounds(next);
-      openPinnedActiveConfluence(next);
+      this.applyPanelBounds();
     };
 
+    const onPointerUp = () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp, { once: true });
   }
 
@@ -152,13 +171,12 @@ export class ActiveConfluenceApp {
       };
       this.state.bounds = next;
       saveBounds(next);
-      resizePinnedActiveConfluence(next.width, next.height);
+      this.applyPanelBounds();
     };
 
     const onPointerUp = () => {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
-      openPinnedActiveConfluence(this.state.bounds);
     };
 
     window.addEventListener("pointermove", onPointerMove);

@@ -295,11 +295,21 @@ p {
   gap: 0.35rem;
 }
 
+.pinned-overlay {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+}
+
 .pinned-confluence {
-  min-height: 100vh;
-  position: relative;
+  position: absolute;
+  min-width: 220px;
+  min-height: 160px;
   padding: 0.7rem;
-  background: #120f0d;
+  border: 1px solid rgba(216, 162, 75, 0.5);
+  border-radius: 8px;
+  background: rgba(18, 15, 13, 0.96);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   overflow: hidden;
 }
 
@@ -328,7 +338,7 @@ p {
 }
 
 .pinned-confluence .active-confluence-list {
-  max-height: calc(100vh - 64px);
+  max-height: calc(100% - 44px);
   overflow: auto;
   padding-right: 0.1rem;
 }

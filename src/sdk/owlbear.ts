@@ -144,29 +144,17 @@ export async function openPinnedActiveConfluence(bounds?: Partial<PinnedActiveCo
   url.searchParams.set("y", String(top));
   url.searchParams.set("w", String(width));
   url.searchParams.set("h", String(height));
-  await OBR.popover.open({
+  await OBR.modal.open({
     id: PINNED_ACTIVE_CONFLUENCE_ID,
     url: `${url.pathname}${url.search}`,
-    width,
-    height,
-    anchorReference: "POSITION",
-    anchorPosition: { left, top },
-    anchorOrigin: { horizontal: "LEFT", vertical: "TOP" },
-    transformOrigin: { horizontal: "LEFT", vertical: "TOP" },
-    disableClickAway: true,
-    marginThreshold: 0,
+    fullScreen: true,
+    hideBackdrop: true,
+    hidePaper: true,
   });
 }
 
-export async function resizePinnedActiveConfluence(width: number, height: number): Promise<void> {
-  await Promise.all([
-    OBR.popover.setWidth(PINNED_ACTIVE_CONFLUENCE_ID, Math.max(220, Math.floor(width))),
-    OBR.popover.setHeight(PINNED_ACTIVE_CONFLUENCE_ID, Math.max(160, Math.floor(height))),
-  ]);
-}
-
 export async function closePinnedActiveConfluence(): Promise<void> {
-  await OBR.popover.close(PINNED_ACTIVE_CONFLUENCE_ID);
+  await OBR.modal.close(PINNED_ACTIVE_CONFLUENCE_ID);
 }
 
 export { OBR };
