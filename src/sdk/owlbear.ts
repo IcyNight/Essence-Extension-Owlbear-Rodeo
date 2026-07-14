@@ -150,6 +150,7 @@ export async function openPinnedActiveConfluence(bounds?: Partial<PinnedActiveCo
     fullScreen: true,
     hideBackdrop: true,
     hidePaper: true,
+    disablePointerEvents: true,
   });
 }
 
