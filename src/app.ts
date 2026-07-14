@@ -24,7 +24,7 @@ import { createBlankCharacter, saveCharacter, deleteCharacter, resetCharacterRes
 import { saveEssence, deleteEssence, createBlankPower } from "./services/essenceService";
 import { saveConfluence, deleteConfluence, createBlankConfluencePower } from "./services/confluenceService";
 import {
-  applyForgeTurnConfluenceTick,
+  applyForgeRoundConfluenceTick,
   activateConfluence,
   adjustResource,
   longRest,
@@ -304,26 +304,33 @@ export class EssencePowersApp {
     }
     this.state.lastForgeTurnTokenId = currentTurnTokenId;
     this.state.lastForgeRound = currentRound;
-    if (!previousTurnTokenId || this.state.actor.role !== "GM") return;
+    if (this.state.actor.role !== "GM") return;
     if (encounterReset) return;
+    const roundTickAmount = currentRound > previousRound ? currentRound - previousRound : 0;
     const eventKey = `${this.state.forgeEncounterSequence}:${previousTurnTokenId}->${currentTurnTokenId ?? "none"}@${currentRound}`;
     await updateData(async (data) => {
-      if (data.lastProcessedForgeTurnEvent === eventKey) return data;
-      const notifications = await createConfluenceAreaNotifications(data, previousTurnTokenId, eventKey, this.state.actor.playerId);
-      const ticked = applyForgeTurnConfluenceTick(
-        data,
-        this.state.actor,
-        previousTurnTokenId,
-        currentTurnTokenId,
-        currentRound,
-        this.state.forgeEncounterSequence,
-      );
-      if (notifications.length === 0) return ticked;
-      const seen = new Set(ticked.confluenceNotifications.map((event) => event.id));
+      let next =
+        roundTickAmount > 0
+          ? applyForgeRoundConfluenceTick(
+              data,
+              this.state.actor,
+              currentRound,
+              this.state.forgeEncounterSequence,
+              roundTickAmount,
+            )
+          : data;
+      if (!previousTurnTokenId || next.lastProcessedForgeTurnEvent === eventKey) return next;
+      const notifications = await createConfluenceAreaNotifications(next, previousTurnTokenId, eventKey, this.state.actor.playerId);
+      next = {
+        ...next,
+        lastProcessedForgeTurnEvent: eventKey,
+      };
+      if (notifications.length === 0) return next;
+      const seen = new Set(next.confluenceNotifications.map((event) => event.id));
       return {
-        ...ticked,
+        ...next,
         confluenceNotifications: [
-          ...ticked.confluenceNotifications,
+          ...next.confluenceNotifications,
           ...notifications.filter((event) => !seen.has(event.id)),
         ].slice(-30),
       };

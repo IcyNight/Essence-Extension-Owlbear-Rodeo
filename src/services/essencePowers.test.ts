@@ -8,6 +8,7 @@ import { deleteEssence } from "./essenceService";
 import {
   activateConfluence,
   adjustResource,
+  applyForgeRoundConfluenceTick,
   applyForgeTurnConfluenceTick,
   longRest,
   spendResource,
@@ -111,6 +112,23 @@ describe("resource logic", () => {
     const afterReset = applyForgeTurnConfluenceTick(beforeReset, gm, "token-hero", "token-next", 1, 1);
     expect(beforeReset.characters.hero.confluenceRoundsRemaining).toBe(9);
     expect(afterReset.characters.hero.confluenceRoundsRemaining).toBe(8);
+  });
+
+  it("ticks player-visible confluence rounds once per Forge round", () => {
+    const data = dataFixture();
+    const active = {
+      ...data,
+      characters: {
+        ...data.characters,
+        hero: { ...data.characters.hero, confluenceRoundsRemaining: 10 },
+      },
+    };
+    const first = applyForgeRoundConfluenceTick(active, gm, 2, 0);
+    const duplicate = applyForgeRoundConfluenceTick(first, gm, 2, 0);
+    const nextRound = applyForgeRoundConfluenceTick(duplicate, gm, 3, 0);
+    expect(first.characters.hero.confluenceRoundsRemaining).toBe(9);
+    expect(duplicate.characters.hero.confluenceRoundsRemaining).toBe(9);
+    expect(nextRound.characters.hero.confluenceRoundsRemaining).toBe(8);
   });
 });
 

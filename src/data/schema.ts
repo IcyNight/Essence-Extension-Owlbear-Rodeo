@@ -59,6 +59,7 @@ export type EssenceData = {
   confluences: Record<string, Confluence>;
   characters: Record<string, Character>;
   lastProcessedForgeTurnEvent: string | null;
+  lastProcessedForgeRoundEvent: string | null;
   confluenceNotifications: ConfluenceNotification[];
 };
 
@@ -74,6 +75,7 @@ export function createEmptyData(): EssenceData {
     confluences: {},
     characters: {},
     lastProcessedForgeTurnEvent: null,
+    lastProcessedForgeRoundEvent: null,
     confluenceNotifications: [],
   };
 }

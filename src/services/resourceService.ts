@@ -51,6 +51,39 @@ export function tickConfluenceRound(character: Character): Character {
   };
 }
 
+export function tickConfluenceRounds(character: Character, amount: number): Character {
+  const remaining = Math.max(0, Math.floor(character.confluenceRoundsRemaining ?? 0));
+  const safeAmount = Math.max(0, Math.floor(amount));
+  if (remaining <= 0 || safeAmount <= 0) return character;
+  return {
+    ...character,
+    confluenceRoundsRemaining: Math.max(0, remaining - safeAmount),
+  };
+}
+
+export function applyForgeRoundConfluenceTick(
+  data: EssenceData,
+  actor: Actor,
+  currentRound: number,
+  encounterSequence = 0,
+  amount = 1,
+): EssenceData {
+  if (actor.role !== "GM") return data;
+  const eventKey = `${encounterSequence}:round:${currentRound}`;
+  if (data.lastProcessedForgeRoundEvent === eventKey) return data;
+  const safeAmount = Math.max(1, Math.floor(amount));
+  return {
+    ...data,
+    lastProcessedForgeRoundEvent: eventKey,
+    characters: Object.fromEntries(
+      Object.entries(data.characters).map(([id, character]) => [
+        id,
+        tickConfluenceRounds(character, safeAmount),
+      ]),
+    ),
+  };
+}
+
 export function applyForgeTurnConfluenceTick(
   data: EssenceData,
   actor: Actor,

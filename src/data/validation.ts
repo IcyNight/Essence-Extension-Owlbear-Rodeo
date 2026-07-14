@@ -123,6 +123,8 @@ export function normalizeData(raw: Partial<EssenceData>): EssenceData {
     characters: {},
     lastProcessedForgeTurnEvent:
       typeof raw.lastProcessedForgeTurnEvent === "string" ? raw.lastProcessedForgeTurnEvent : null,
+    lastProcessedForgeRoundEvent:
+      typeof raw.lastProcessedForgeRoundEvent === "string" ? raw.lastProcessedForgeRoundEvent : null,
     confluenceNotifications: Array.isArray(raw.confluenceNotifications)
       ? raw.confluenceNotifications
           .flatMap((event) => {
