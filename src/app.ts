@@ -7,7 +7,6 @@ import {
   getSceneTokenInfo,
   getSelectedTokenId,
   getForgeTurnState,
-  createConfluenceAreaCircle,
   createConfluenceAreaNotifications,
   getSelectedConfluenceAreaCircle,
   onPartyChange,
@@ -17,6 +16,7 @@ import {
   openPinnedActiveConfluence,
   selectConfluenceAreaCircle,
   showConfluenceReminder,
+  startConfluenceAreaDrawing,
 } from "./sdk/owlbear";
 import { onDataChange, readData, updateData, writeData } from "./sdk/storage";
 import { playerView } from "./ui/playerView";
@@ -344,7 +344,17 @@ export class EssencePowersApp {
         if (!selected) areaItemId = null;
       }
       if (!areaItemId) {
-        areaItemId = await createConfluenceAreaCircle(character);
+        await startConfluenceAreaDrawing(character, (drawnAreaItemId) => {
+          void updateData((data) =>
+            updateCharacterResource(data, this.state.actor, characterId, (item) => ({
+              ...item,
+              confluenceAreaItemId: drawnAreaItemId,
+              confluenceAreaSaved: false,
+            })),
+          ).then(() => this.setMessage("Confluence circle drawn. Press Select Area again to save it."));
+        });
+        this.setMessage("Draw the confluence circle on the scene, then press Select Area again to save it.");
+        return;
       }
       await updateData((data) =>
         updateCharacterResource(data, this.state.actor, characterId, (item) => ({

@@ -12,6 +12,9 @@ const FORGE_CURRENT_TURN_KEY = "com.battle-system.forge/currturn";
 const FORGE_CURRENT_ROUND_KEY = "com.battle-system.forge/currround";
 const PINNED_ACTIVE_CONFLUENCE_ID = "com.codex.essence-powers/active-confluence";
 const CONFLUENCE_AREA_CHARACTER_KEY = "com.codex.essence-powers/confluence-area-character";
+const CONFLUENCE_AREA_TOOL_ID = "com.codex.essence-powers/tool/confluence-area";
+const CONFLUENCE_AREA_MODE_ID = "com.codex.essence-powers/tool/confluence-area-draw";
+const ACTION_ICON_URL = "https://icynight.github.io/Essence-Extension-Owlbear-Rodeo/action-e.svg";
 
 type CircleArea = {
   character: Character;
@@ -19,6 +22,15 @@ type CircleArea = {
   center: { x: number; y: number };
   radius: number;
 };
+
+type PendingConfluenceArea = {
+  character: Character;
+  start: { x: number; y: number } | null;
+  onComplete: (itemId: string) => void;
+};
+
+let confluenceAreaToolRegistered = false;
+let pendingConfluenceArea: PendingConfluenceArea | null = null;
 
 export async function waitForOwlbear(): Promise<boolean> {
   if (typeof window === "undefined") return false;
@@ -126,9 +138,8 @@ export function onForgeTurnChange(callback: (state: ForgeTurnState) => void): ()
   });
 }
 
-export async function createConfluenceAreaCircle(character: Character): Promise<string> {
-  const [position, dpi] = await Promise.all([OBR.viewport.getPosition(), OBR.scene.grid.getDpi()]);
-  const size = Math.max(120, dpi * 4);
+async function createConfluenceAreaCircleAt(character: Character, position: { x: number; y: number }, size: number): Promise<string> {
+  const dpi = await OBR.scene.grid.getDpi();
   const item = buildShape()
     .name(`${character.name} Confluence Area`)
     .shapeType("CIRCLE")
@@ -147,6 +158,58 @@ export async function createConfluenceAreaCircle(character: Character): Promise<
   await OBR.scene.items.addItems([item]);
   await OBR.player.select([item.id]);
   return item.id;
+}
+
+export async function createConfluenceAreaCircle(character: Character): Promise<string> {
+  const [position, dpi] = await Promise.all([OBR.viewport.getPosition(), OBR.scene.grid.getDpi()]);
+  const size = Math.max(120, dpi * 4);
+  return createConfluenceAreaCircleAt(character, position, size);
+}
+
+async function registerConfluenceAreaTool(): Promise<void> {
+  if (confluenceAreaToolRegistered) return;
+  await OBR.tool.createMode({
+    id: CONFLUENCE_AREA_MODE_ID,
+    icons: [{ icon: ACTION_ICON_URL, label: "Draw confluence area" }],
+    cursors: [{ cursor: "crosshair" }],
+    preventDrag: { dragging: true },
+    onToolDragStart: (_context, event) => {
+      if (!pendingConfluenceArea) return;
+      pendingConfluenceArea.start = event.pointerPosition;
+    },
+    onToolDragEnd: (_context, event) => {
+      const pending = pendingConfluenceArea;
+      if (!pending?.start) return;
+      const start = pending.start;
+      const end = event.pointerPosition;
+      const width = Math.abs(end.x - start.x);
+      const height = Math.abs(end.y - start.y);
+      const size = Math.max(width, height, 40);
+      const position = {
+        x: Math.min(start.x, end.x),
+        y: Math.min(start.y, end.y),
+      };
+      pendingConfluenceArea = null;
+      void createConfluenceAreaCircleAt(pending.character, position, size).then((itemId) => pending.onComplete(itemId));
+    },
+    onToolDragCancel: () => {
+      if (pendingConfluenceArea) pendingConfluenceArea.start = null;
+    },
+  });
+  await OBR.tool.create({
+    id: CONFLUENCE_AREA_TOOL_ID,
+    icons: [{ icon: ACTION_ICON_URL, label: "Confluence Area" }],
+    defaultMode: CONFLUENCE_AREA_MODE_ID,
+  });
+  confluenceAreaToolRegistered = true;
+}
+
+export async function startConfluenceAreaDrawing(character: Character, onComplete: (itemId: string) => void): Promise<void> {
+  await registerConfluenceAreaTool();
+  pendingConfluenceArea = { character, start: null, onComplete };
+  await OBR.player.select([]);
+  await OBR.tool.activateTool(CONFLUENCE_AREA_TOOL_ID);
+  await OBR.tool.activateMode(CONFLUENCE_AREA_TOOL_ID, CONFLUENCE_AREA_MODE_ID);
 }
 
 export async function selectConfluenceAreaCircle(itemId: string): Promise<boolean> {
