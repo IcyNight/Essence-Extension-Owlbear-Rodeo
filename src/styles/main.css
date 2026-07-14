@@ -18,12 +18,17 @@ body {
 
 html.pinned-mode,
 body.pinned-mode {
+  height: 100%;
   min-width: 0;
   background: transparent;
 }
 
 body.pinned-mode {
   overflow: hidden;
+}
+
+html.pinned-mode #app {
+  height: 100%;
 }
 
 button,
@@ -312,7 +317,8 @@ body.pinned-mode .loading {
 .pinned-confluence {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   padding: 0.7rem;
   border: 1px solid rgba(216, 162, 75, 0.5);
   border-radius: 8px;

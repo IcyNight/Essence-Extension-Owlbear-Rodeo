@@ -119,7 +119,7 @@ export function onForgeTurnChange(callback: (state: ForgeTurnState) => void): ()
 }
 
 export async function openPinnedActiveConfluence(): Promise<void> {
-  const [viewportWidth, viewportHeight] = await Promise.all([OBR.viewport.getWidth(), OBR.viewport.getHeight()]);
+  const viewportWidth = await OBR.viewport.getWidth();
   const url = new URL(window.location.href);
   url.searchParams.set("view", "active-confluence");
   url.searchParams.set("pinned", "true");
@@ -127,7 +127,7 @@ export async function openPinnedActiveConfluence(): Promise<void> {
   await OBR.popover.open({
     id: PINNED_ACTIVE_CONFLUENCE_ID,
     url: `${url.pathname}${url.search}`,
-    height: Math.min(400, Math.max(240, viewportHeight - 100)),
+    height: 240,
     width: 350,
     anchorPosition: { top: 50, left: viewportWidth - 70 },
     anchorReference: "POSITION",
