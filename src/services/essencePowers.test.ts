@@ -97,6 +97,21 @@ describe("resource logic", () => {
     expect(first.characters.hero.confluenceRoundsRemaining).toBe(9);
     expect(second.characters.hero.confluenceRoundsRemaining).toBe(9);
   });
+
+  it("allows the same Forge round after a reset sequence", () => {
+    const data = dataFixture();
+    const active = {
+      ...data,
+      characters: {
+        ...data.characters,
+        hero: { ...data.characters.hero, confluenceRoundsRemaining: 10 },
+      },
+    };
+    const beforeReset = applyForgeTurnConfluenceTick(active, gm, "token-hero", "token-next", 1, 0);
+    const afterReset = applyForgeTurnConfluenceTick(beforeReset, gm, "token-hero", "token-next", 1, 1);
+    expect(beforeReset.characters.hero.confluenceRoundsRemaining).toBe(9);
+    expect(afterReset.characters.hero.confluenceRoundsRemaining).toBe(8);
+  });
 });
 
 describe("character validation", () => {

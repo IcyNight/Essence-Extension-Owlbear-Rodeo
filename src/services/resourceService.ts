@@ -57,9 +57,10 @@ export function applyForgeTurnConfluenceTick(
   previousTurnTokenId: string | null,
   currentTurnTokenId: string | null,
   currentRound: number,
+  encounterSequence = 0,
 ): EssenceData {
   if (!previousTurnTokenId || actor.role !== "GM") return data;
-  const eventKey = `${previousTurnTokenId}->${currentTurnTokenId ?? "none"}@${currentRound}`;
+  const eventKey = `${encounterSequence}:${previousTurnTokenId}->${currentTurnTokenId ?? "none"}@${currentRound}`;
   if (data.lastProcessedForgeTurnEvent === eventKey) return data;
   const character = Object.values(data.characters).find((item) => item.tokenId === previousTurnTokenId);
   if (!character || character.confluenceRoundsRemaining <= 0) {

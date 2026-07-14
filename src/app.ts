@@ -45,6 +45,7 @@ type AppState = {
   pendingConfluenceAreaCharacterId: string | null;
   lastForgeTurnTokenId: string | null;
   lastForgeRound: number;
+  forgeEncounterSequence: number;
   message: string;
   error: string;
 };
@@ -74,6 +75,7 @@ export class EssencePowersApp {
       pendingConfluenceAreaCharacterId: null,
       lastForgeTurnTokenId: null,
       lastForgeRound: 1,
+      forgeEncounterSequence: 0,
       message: "",
       error: "",
     };
@@ -296,14 +298,26 @@ export class EssencePowersApp {
     const previousTurnTokenId = this.state.lastForgeTurnTokenId;
     const previousRound = this.state.lastForgeRound;
     if (previousTurnTokenId === currentTurnTokenId && previousRound === currentRound) return;
+    const encounterReset = currentRound < previousRound;
+    if (encounterReset) {
+      this.state.forgeEncounterSequence += 1;
+    }
     this.state.lastForgeTurnTokenId = currentTurnTokenId;
     this.state.lastForgeRound = currentRound;
     if (!previousTurnTokenId || this.state.actor.role !== "GM") return;
-    const eventKey = `${previousTurnTokenId}->${currentTurnTokenId ?? "none"}@${currentRound}`;
+    if (encounterReset) return;
+    const eventKey = `${this.state.forgeEncounterSequence}:${previousTurnTokenId}->${currentTurnTokenId ?? "none"}@${currentRound}`;
     await updateData(async (data) => {
       if (data.lastProcessedForgeTurnEvent === eventKey) return data;
       const notifications = await createConfluenceAreaNotifications(data, previousTurnTokenId, eventKey, this.state.actor.playerId);
-      const ticked = applyForgeTurnConfluenceTick(data, this.state.actor, previousTurnTokenId, currentTurnTokenId, currentRound);
+      const ticked = applyForgeTurnConfluenceTick(
+        data,
+        this.state.actor,
+        previousTurnTokenId,
+        currentTurnTokenId,
+        currentRound,
+        this.state.forgeEncounterSequence,
+      );
       if (notifications.length === 0) return ticked;
       const seen = new Set(ticked.confluenceNotifications.map((event) => event.id));
       return {
