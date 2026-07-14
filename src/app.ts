@@ -238,9 +238,6 @@ export class EssencePowersApp {
   }
 
   private async longRest(): Promise<void> {
-    if (this.state.actor.role !== "GM") {
-      throw new Error("Only the GM can restore resources with LR.");
-    }
     if (!confirm("Restore all essence points and confluence uses?")) return;
     await updateData((data) =>
       updateCharacterResource(data, this.state.actor, this.currentCharacterId(), (character) => longRest(character)),

@@ -94,7 +94,7 @@ export function playerView(data: EssenceData, actor: Actor, selectedCharacterId:
       <footer class="resource-dock">
         ${resourceCounter("Essence Points", character.essencePoints, "essencePoints", canRestoreResources)}
         ${resourceCounter("Confluence Uses", character.confluenceUses, "confluenceUses", canRestoreResources)}
-        ${canRestoreResources ? `<button class="lr-button" type="button" data-action="long-rest">LR</button>` : ""}
+        <button class="lr-button" type="button" data-action="long-rest">LR</button>
       </footer>
     </section>
   `;
