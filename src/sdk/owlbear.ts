@@ -1,5 +1,5 @@
-import OBR from "@owlbear-rodeo/sdk";
-import { PlayerInfo, PlayerRole } from "../data/schema";
+import OBR, { buildShape, isShape, Item, Shape } from "@owlbear-rodeo/sdk";
+import { Character, ConfluenceNotification, EssenceData, PlayerInfo, PlayerRole } from "../data/schema";
 
 export type SceneTokenInfo = {
   id: string;
@@ -11,6 +11,14 @@ const FORGE_UNIT_NAME_KEY = "com.battle-system.forge/name";
 const FORGE_CURRENT_TURN_KEY = "com.battle-system.forge/currturn";
 const FORGE_CURRENT_ROUND_KEY = "com.battle-system.forge/currround";
 const PINNED_ACTIVE_CONFLUENCE_ID = "com.codex.essence-powers/active-confluence";
+const CONFLUENCE_AREA_CHARACTER_KEY = "com.codex.essence-powers/confluence-area-character";
+
+type CircleArea = {
+  character: Character;
+  shape: Shape;
+  center: { x: number; y: number };
+  radius: number;
+};
 
 export async function waitForOwlbear(): Promise<boolean> {
   if (typeof window === "undefined") return false;
@@ -116,6 +124,115 @@ export function onForgeTurnChange(callback: (state: ForgeTurnState) => void): ()
   return OBR.scene.onMetadataChange((metadata) => {
     callback(forgeTurnStateFromMetadata(metadata));
   });
+}
+
+export async function createConfluenceAreaCircle(character: Character): Promise<string> {
+  const [position, dpi] = await Promise.all([OBR.viewport.getPosition(), OBR.scene.grid.getDpi()]);
+  const size = Math.max(120, dpi * 4);
+  const item = buildShape()
+    .name(`${character.name} Confluence Area`)
+    .shapeType("CIRCLE")
+    .width(size)
+    .height(size)
+    .position(position)
+    .layer("DRAWING")
+    .fillColor("#8f382c")
+    .fillOpacity(0.18)
+    .strokeColor("#f0c15b")
+    .strokeOpacity(0.9)
+    .strokeWidth(Math.max(3, Math.round(dpi / 18)))
+    .strokeDash([12, 8])
+    .metadata({ [CONFLUENCE_AREA_CHARACTER_KEY]: character.id })
+    .build();
+  await OBR.scene.items.addItems([item]);
+  await OBR.player.select([item.id]);
+  return item.id;
+}
+
+export async function selectConfluenceAreaCircle(itemId: string): Promise<boolean> {
+  const [item] = await OBR.scene.items.getItems([itemId]);
+  if (!item || !isShape(item) || item.shapeType !== "CIRCLE") return false;
+  await OBR.player.select([itemId]);
+  return true;
+}
+
+export async function getSelectedConfluenceAreaCircle(fallbackId?: string | null): Promise<string | null> {
+  const selection = await OBR.player.getSelection();
+  const ids = [...(selection ?? []), ...(fallbackId ? [fallbackId] : [])];
+  if (ids.length === 0) return null;
+  const items = await OBR.scene.items.getItems(ids);
+  const item = items.find((candidate) => isShape(candidate) && candidate.shapeType === "CIRCLE");
+  return item?.id ?? null;
+}
+
+function pointInCircle(point: { x: number; y: number }, area: CircleArea): boolean {
+  const dx = point.x - area.center.x;
+  const dy = point.y - area.center.y;
+  return Math.sqrt(dx * dx + dy * dy) <= area.radius;
+}
+
+async function itemCenter(item: Item): Promise<{ x: number; y: number }> {
+  const bounds = await OBR.scene.items.getItemBounds([item.id]);
+  return bounds.center;
+}
+
+async function getSavedCircleAreas(characters: Character[]): Promise<CircleArea[]> {
+  const active = characters.filter(
+    (character) => character.confluenceRoundsRemaining > 0 && character.confluenceAreaSaved && character.confluenceAreaItemId,
+  );
+  if (active.length === 0) return [];
+  const ids = active.map((character) => character.confluenceAreaItemId as string);
+  const items = await OBR.scene.items.getItems(ids);
+  const areas: CircleArea[] = [];
+  for (const character of active) {
+    const item = items.find((candidate) => candidate.id === character.confluenceAreaItemId);
+    if (!item || !isShape(item) || item.shapeType !== "CIRCLE") continue;
+    const bounds = await OBR.scene.items.getItemBounds([item.id]);
+    areas.push({
+      character,
+      shape: item,
+      center: bounds.center,
+      radius: Math.min(bounds.width, bounds.height) / 2,
+    });
+  }
+  return areas;
+}
+
+function notificationOwnerForToken(token: SceneTokenInfo, data: EssenceData): string {
+  const character = Object.values(data.characters).find((item) => item.tokenId === token.id);
+  return character?.ownerPlayerId || token.ownerPlayerId;
+}
+
+export async function createConfluenceAreaNotifications(
+  data: EssenceData,
+  previousTurnTokenId: string,
+  eventKey: string,
+): Promise<ConfluenceNotification[]> {
+  const ready = await OBR.scene.isReady();
+  if (!ready) return [];
+  const [tokenItem] = await OBR.scene.items.getItems([previousTurnTokenId]);
+  if (!tokenItem) return [];
+  const areas = await getSavedCircleAreas(Object.values(data.characters));
+  if (areas.length === 0) return [];
+  const tokenCenter = await itemCenter(tokenItem);
+  if (!areas.some((area) => pointInCircle(tokenCenter, area))) return [];
+
+  const token = await getSceneTokenInfo(previousTurnTokenId);
+  const ownerPlayerId = notificationOwnerForToken(token, data);
+  if (!ownerPlayerId) return [];
+  const name = token.name || tokenItem.name || "Token";
+  return [
+    {
+      id: `${eventKey}:${ownerPlayerId}`,
+      ownerPlayerId,
+      tokenNames: [name],
+    },
+  ];
+}
+
+export async function showConfluenceReminder(tokenNames: string[]): Promise<void> {
+  const names = [...new Set(tokenNames)].join(", ");
+  await OBR.notification.show(`Remember Confluence effect in the area: ${names}.`, "WARNING");
 }
 
 export async function openPinnedActiveConfluence(): Promise<void> {

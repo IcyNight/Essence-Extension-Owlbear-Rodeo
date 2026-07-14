@@ -42,7 +42,15 @@ export type Character = {
   essencePoints: ResourcePool;
   confluenceUses: ResourcePool;
   confluenceRoundsRemaining: number;
+  confluenceAreaItemId: string | null;
+  confluenceAreaSaved: boolean;
   visibleToPlayers: boolean;
+};
+
+export type ConfluenceNotification = {
+  id: string;
+  ownerPlayerId: string;
+  tokenNames: string[];
 };
 
 export type EssenceData = {
@@ -51,6 +59,7 @@ export type EssenceData = {
   confluences: Record<string, Confluence>;
   characters: Record<string, Character>;
   lastProcessedForgeTurnEvent: string | null;
+  confluenceNotifications: ConfluenceNotification[];
 };
 
 export type PlayerInfo = {
@@ -65,6 +74,7 @@ export function createEmptyData(): EssenceData {
     confluences: {},
     characters: {},
     lastProcessedForgeTurnEvent: null,
+    confluenceNotifications: [],
   };
 }
 

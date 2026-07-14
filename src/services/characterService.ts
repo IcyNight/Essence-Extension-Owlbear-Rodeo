@@ -14,6 +14,8 @@ export function createBlankCharacter(): Character {
     essencePoints: { current: 0, max: 0 },
     confluenceUses: { current: 0, max: 0 },
     confluenceRoundsRemaining: 0,
+    confluenceAreaItemId: null,
+    confluenceAreaSaved: false,
     visibleToPlayers: false,
   };
 }

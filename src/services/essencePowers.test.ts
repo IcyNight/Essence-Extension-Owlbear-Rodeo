@@ -40,6 +40,8 @@ function dataFixture(): EssenceData {
         essencePoints: { current: 2, max: 6 },
         confluenceUses: { current: 0, max: 2 },
         confluenceRoundsRemaining: 0,
+        confluenceAreaItemId: null,
+        confluenceAreaSaved: false,
         visibleToPlayers: true,
       },
     },

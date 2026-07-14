@@ -105,6 +105,11 @@ function normalizeCharacter(
     essencePoints: normalizePool(character.essencePoints),
     confluenceUses: normalizePool(character.confluenceUses),
     confluenceRoundsRemaining: clamp(Math.floor(Number(character.confluenceRoundsRemaining ?? 0)), 0, 10),
+    confluenceAreaItemId:
+      typeof character.confluenceAreaItemId === "string" && character.confluenceAreaItemId
+        ? character.confluenceAreaItemId
+        : null,
+    confluenceAreaSaved: Boolean(character.confluenceAreaSaved),
     visibleToPlayers: Boolean(character.visibleToPlayers),
   };
 }
@@ -118,6 +123,19 @@ export function normalizeData(raw: Partial<EssenceData>): EssenceData {
     characters: {},
     lastProcessedForgeTurnEvent:
       typeof raw.lastProcessedForgeTurnEvent === "string" ? raw.lastProcessedForgeTurnEvent : null,
+    confluenceNotifications: Array.isArray(raw.confluenceNotifications)
+      ? raw.confluenceNotifications
+          .flatMap((event) => {
+            const candidate = event as { id?: unknown; ownerPlayerId?: unknown; tokenNames?: unknown };
+            const id = normalizeName(candidate.id);
+            const ownerPlayerId = normalizeName(candidate.ownerPlayerId);
+            const tokenNames = Array.isArray(candidate.tokenNames)
+              ? candidate.tokenNames.map((name) => normalizeName(name)).filter(Boolean)
+              : [];
+            return id && ownerPlayerId && tokenNames.length > 0 ? [{ id, ownerPlayerId, tokenNames }] : [];
+          })
+          .slice(-30)
+      : [],
   };
 
   const rawEssences = raw.essences && typeof raw.essences === "object" ? raw.essences : empty.essences;

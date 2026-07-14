@@ -30,6 +30,7 @@ export function longRest(character: Character): Character {
       current: restoreResource(character.confluenceUses.max),
     },
     confluenceRoundsRemaining: 0,
+    confluenceAreaSaved: false,
   };
 }
 
@@ -37,6 +38,7 @@ export function activateConfluence(character: Character, rounds = 10): Character
   return {
     ...character,
     confluenceRoundsRemaining: Math.max(0, Math.floor(rounds)),
+    confluenceAreaSaved: false,
   };
 }
 

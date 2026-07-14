@@ -7,11 +7,16 @@ import {
   getSceneTokenInfo,
   getSelectedTokenId,
   getForgeTurnState,
+  createConfluenceAreaCircle,
+  createConfluenceAreaNotifications,
+  getSelectedConfluenceAreaCircle,
   onPartyChange,
   onForgeTurnChange,
   onPlayerChange,
   onSelectionChange,
   openPinnedActiveConfluence,
+  selectConfluenceAreaCircle,
+  showConfluenceReminder,
 } from "./sdk/owlbear";
 import { onDataChange, readData, updateData, writeData } from "./sdk/storage";
 import { playerView } from "./ui/playerView";
@@ -43,6 +48,8 @@ type AppState = {
   message: string;
   error: string;
 };
+
+const SEEN_CONFLUENCE_NOTIFICATIONS_KEY = "essence-powers.seen-confluence-notifications";
 
 export class EssencePowersApp {
   private state: AppState;
@@ -79,6 +86,7 @@ export class EssencePowersApp {
     this.unsubscribers.push(
       onDataChange((data) => {
         this.state.data = data;
+        this.showConfluenceNotifications(data);
         this.render();
       }),
       onPlayerChange(() => this.refreshPlayers()),
@@ -186,6 +194,7 @@ export class EssencePowersApp {
       else if (action.startsWith("use-confluence:")) await this.useConfluencePower(action.split(":")[1], button.dataset.powerId);
       else if (action === "resource") await this.adjustResource(button);
       else if (action === "long-rest") await this.longRest();
+      else if (action === "confluence-area") await this.selectConfluenceArea();
       else if (action === "active-confluence") this.toggleActiveConfluence();
       else if (action === "pin-active-confluence") await this.pinActiveConfluence();
       else if (action === "delete-character") await this.deleteCharacter(button.dataset.id);
@@ -237,6 +246,7 @@ export class EssencePowersApp {
             current: spendResource(character.confluenceUses.current, character.confluenceUses.max, power.cost),
           },
           confluenceRoundsRemaining: 10,
+          confluenceAreaSaved: false,
         };
       }),
     );
@@ -278,9 +288,85 @@ export class EssencePowersApp {
     if (previousTurnTokenId === currentTurnTokenId) return;
     this.state.lastForgeTurnTokenId = currentTurnTokenId;
     if (!previousTurnTokenId || this.state.actor.role !== "GM") return;
-    await updateData((data) =>
-      applyForgeTurnConfluenceTick(data, this.state.actor, previousTurnTokenId, currentTurnTokenId, currentRound),
+    const eventKey = `${previousTurnTokenId}->${currentTurnTokenId ?? "none"}@${currentRound}`;
+    await updateData(async (data) => {
+      if (data.lastProcessedForgeTurnEvent === eventKey) return data;
+      const notifications = await createConfluenceAreaNotifications(data, previousTurnTokenId, eventKey);
+      const ticked = applyForgeTurnConfluenceTick(data, this.state.actor, previousTurnTokenId, currentTurnTokenId, currentRound);
+      if (notifications.length === 0) return ticked;
+      const seen = new Set(ticked.confluenceNotifications.map((event) => event.id));
+      return {
+        ...ticked,
+        confluenceNotifications: [
+          ...ticked.confluenceNotifications,
+          ...notifications.filter((event) => !seen.has(event.id)),
+        ].slice(-30),
+      };
+    });
+  }
+
+  private seenConfluenceNotificationIds(): Set<string> {
+    try {
+      const value = JSON.parse(localStorage.getItem(SEEN_CONFLUENCE_NOTIFICATIONS_KEY) ?? "[]");
+      return new Set(Array.isArray(value) ? value.filter((id) => typeof id === "string") : []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  private saveSeenConfluenceNotificationIds(ids: Set<string>): void {
+    localStorage.setItem(SEEN_CONFLUENCE_NOTIFICATIONS_KEY, JSON.stringify([...ids].slice(-60)));
+  }
+
+  private showConfluenceNotifications(data: EssenceData): void {
+    const seen = this.seenConfluenceNotificationIds();
+    const pending = data.confluenceNotifications.filter(
+      (event) => event.ownerPlayerId === this.state.actor.playerId && !seen.has(event.id),
     );
+    if (pending.length === 0) return;
+    pending.forEach((event) => seen.add(event.id));
+    this.saveSeenConfluenceNotificationIds(seen);
+    const tokenNames = pending.flatMap((event) => event.tokenNames);
+    showConfluenceReminder(tokenNames);
+  }
+
+  private async selectConfluenceArea(): Promise<void> {
+    const characterId = this.currentCharacterId();
+    const character = this.state.data.characters[characterId];
+    if (!character || character.confluenceRoundsRemaining <= 0) {
+      throw new Error("Use a confluence power before selecting an area.");
+    }
+
+    if (!character.confluenceAreaItemId || character.confluenceAreaSaved) {
+      let areaItemId = character.confluenceAreaItemId;
+      if (areaItemId) {
+        const selected = await selectConfluenceAreaCircle(areaItemId);
+        if (!selected) areaItemId = null;
+      }
+      if (!areaItemId) {
+        areaItemId = await createConfluenceAreaCircle(character);
+      }
+      await updateData((data) =>
+        updateCharacterResource(data, this.state.actor, characterId, (item) => ({
+          ...item,
+          confluenceAreaItemId: areaItemId,
+          confluenceAreaSaved: false,
+        })),
+      );
+      this.setMessage("Move or resize the confluence circle, then press Select Area again to save it.");
+      return;
+    }
+
+    const selectedAreaItemId = await getSelectedConfluenceAreaCircle(character.confluenceAreaItemId);
+    if (!selectedAreaItemId) throw new Error("Select the confluence circle before saving it.");
+    await updateData((data) =>
+      updateCharacterResource(data, this.state.actor, characterId, (item) => ({
+        ...item,
+        confluenceAreaItemId: selectedAreaItemId,
+        confluenceAreaSaved: true,
+      })),
+    );
+    this.setMessage("Confluence area saved.");
   }
 
   private async longRest(): Promise<void> {
@@ -308,6 +394,8 @@ export class EssencePowersApp {
       essencePoints: { max: epMax, current: Math.min(numberValue(data, "epCurrent"), epMax) },
       confluenceUses: { max: cuMax, current: Math.min(numberValue(data, "cuCurrent"), cuMax) },
       confluenceRoundsRemaining: Math.max(0, Number(this.state.data.characters[textValue(data, "id")]?.confluenceRoundsRemaining ?? 0)),
+      confluenceAreaItemId: this.state.data.characters[textValue(data, "id")]?.confluenceAreaItemId ?? null,
+      confluenceAreaSaved: Boolean(this.state.data.characters[textValue(data, "id")]?.confluenceAreaSaved),
       visibleToPlayers: data.get("visibleToPlayers") === "on",
     };
   }

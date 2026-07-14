@@ -101,7 +101,10 @@ export function playerView(data: EssenceData, actor: Actor, selectedCharacterId:
         <button class="lr-button" type="button" data-action="long-rest">LR</button>
         ${
           character.confluenceRoundsRemaining > 0
-            ? `<div class="rounds-remaining"><strong>Rounds Remaining:</strong><span>${character.confluenceRoundsRemaining}</span></div>`
+            ? `
+              <div class="rounds-remaining"><strong>Rounds Remaining:</strong><span>${character.confluenceRoundsRemaining}</span></div>
+              <button class="secondary" type="button" data-action="confluence-area">Select Area</button>
+            `
             : ""
         }
       </footer>
