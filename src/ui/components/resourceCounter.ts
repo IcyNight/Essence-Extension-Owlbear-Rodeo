@@ -1,9 +1,11 @@
 import { ResourcePool } from "../../data/schema";
 import { escapeHtml } from "../dom";
 
-export function resourceCounter(label: string, pool: ResourcePool, key: string, canRestore: boolean): string {
-  const controls = canRestore
-    ? `
+export function resourceCounter(label: string, pool: ResourcePool, key: string, canRestore: boolean, showControls = true): string {
+  const controls = !showControls
+    ? ""
+    : canRestore
+      ? `
         <button type="button" data-action="resource" data-resource="${key}" data-delta="-1" aria-label="Decrease ${escapeHtml(
           label,
         )}">-</button>
@@ -11,7 +13,7 @@ export function resourceCounter(label: string, pool: ResourcePool, key: string, 
           label,
         )}">+</button>
       `
-    : `
+      : `
         <button class="use-resource" type="button" data-action="resource" data-resource="${key}" data-delta="-1" aria-label="Use 1 ${escapeHtml(
           label,
         )}" ${pool.current <= 0 ? "disabled" : ""}>Use</button>
@@ -23,9 +25,7 @@ export function resourceCounter(label: string, pool: ResourcePool, key: string, 
         <strong>${escapeHtml(label)}</strong>
         <span>${pool.current} / ${pool.max}</span>
       </div>
-      <div class="stepper" aria-label="${escapeHtml(label)} controls">
-        ${controls}
-      </div>
+      ${showControls ? `<div class="stepper" aria-label="${escapeHtml(label)} controls">${controls}</div>` : ""}
     </div>
   `;
 }

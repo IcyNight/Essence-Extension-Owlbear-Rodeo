@@ -85,15 +85,19 @@ export function playerView(data: EssenceData, actor: Actor, selectedCharacterId:
     <section class="player-panel" data-character-id="${escapeHtml(character.id)}">
       ${selector}
       <h2>${escapeHtml(character.name)}</h2>
+      <h3 class="player-section-title">Essences</h3>
       <div class="slots">
         ${essenceSlot(data, character, 0)}
         ${essenceSlot(data, character, 1)}
         ${essenceSlot(data, character, 2)}
+      </div>
+      <h3 class="player-section-title">Confluence</h3>
+      <div class="slots">
         ${confluenceSlot(data, character)}
       </div>
       <footer class="resource-dock">
-        ${resourceCounter("Essence Points", character.essencePoints, "essencePoints", canRestoreResources)}
-        ${resourceCounter("Confluence Uses", character.confluenceUses, "confluenceUses", canRestoreResources)}
+        ${resourceCounter("Essence Points", character.essencePoints, "essencePoints", canRestoreResources, canRestoreResources)}
+        ${resourceCounter("Confluence Uses", character.confluenceUses, "confluenceUses", canRestoreResources, canRestoreResources)}
         <button class="lr-button" type="button" data-action="long-rest">LR</button>
         ${
           character.confluenceRoundsRemaining > 0

@@ -157,6 +157,12 @@ body.pinned-mode .loading {
   font-size: 1.35rem;
 }
 
+.player-section-title {
+  margin: 0.9rem 0 0.5rem;
+  color: #f0c15b;
+  font-size: 1rem;
+}
+
 .slots {
   display: grid;
   gap: 0.6rem;
