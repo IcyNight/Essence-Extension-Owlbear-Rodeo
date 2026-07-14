@@ -13,7 +13,7 @@ import {
 import { onDataChange, readData, updateData, writeData } from "./sdk/storage";
 import { playerView } from "./ui/playerView";
 import { gmView } from "./ui/gmView";
-import { saveCharacter, deleteCharacter, resetCharacterResources } from "./services/characterService";
+import { createBlankCharacter, saveCharacter, deleteCharacter, resetCharacterResources } from "./services/characterService";
 import { saveEssence, deleteEssence, createBlankPower } from "./services/essenceService";
 import { saveConfluence, deleteConfluence, createBlankConfluencePower } from "./services/confluenceService";
 import { adjustResource, longRest, spendResource, updateCharacterResource } from "./services/resourceService";
@@ -26,6 +26,7 @@ type AppState = {
   selectedCharacterId: string | null;
   gmTab: string;
   selectedGmId: string | null;
+  draftCharacter: Character;
   pendingTokenCharacterId: string | null;
   message: string;
   error: string;
@@ -49,6 +50,7 @@ export class EssencePowersApp {
       selectedCharacterId: null,
       gmTab: localStorage.getItem("essence-powers.tab") ?? "characters",
       selectedGmId: null,
+      draftCharacter: createBlankCharacter(),
       pendingTokenCharacterId: null,
       message: "",
       error: "",
@@ -116,7 +118,13 @@ export class EssencePowersApp {
         ${playerView(this.state.data, this.state.actor, this.state.selectedCharacterId)}
         ${
           this.state.actor.role === "GM"
-            ? gmView(this.state.data, this.state.players, this.state.gmTab, this.state.selectedGmId)
+            ? gmView(
+                this.state.data,
+                this.state.players,
+                this.state.gmTab,
+                this.state.selectedGmId,
+                this.state.draftCharacter,
+              )
             : ""
         }
       </main>
@@ -139,6 +147,9 @@ export class EssencePowersApp {
 
     bindClick(this.root, "[data-select]", (button) => {
       this.state.selectedGmId = button.dataset.select || null;
+      if (!this.state.selectedGmId && this.state.gmTab === "characters") {
+        this.state.draftCharacter = createBlankCharacter();
+      }
       this.render();
     });
 
@@ -255,6 +266,7 @@ export class EssencePowersApp {
     const character = this.characterFromForm(form);
     await updateData((data) => saveCharacter(data, this.state.actor, character, this.state.players.map((player) => player.id)));
     this.state.selectedGmId = character.id;
+    this.state.draftCharacter = createBlankCharacter();
     this.setMessage("Character saved.");
   }
 
@@ -346,12 +358,11 @@ export class EssencePowersApp {
   private async useSelectedToken(characterId?: string): Promise<void> {
     const tokenId = await getSelectedTokenId();
     if (!tokenId) {
-      if (!characterId) throw new Error("Save the character first, then link a token.");
-      this.state.pendingTokenCharacterId = characterId;
-      this.setMessage("Token pick mode active. Click a token in the Owlbear scene to link it.");
+      this.state.pendingTokenCharacterId = characterId || this.state.draftCharacter.id;
+      this.setMessage("Token pick mode active. Click a token in the Owlbear scene to create or link the character.");
       return;
     }
-    await this.assignTokenToCharacter(characterId, tokenId);
+    await this.assignTokenToCharacter(characterId || this.state.draftCharacter.id, tokenId);
   }
 
   private async assignTokenToCharacter(characterId: string | undefined, tokenId: string): Promise<void> {
@@ -381,7 +392,8 @@ export class EssencePowersApp {
     const character = this.characterFromForm(form);
     await updateData((data) => saveCharacter(data, this.state.actor, character, this.state.players.map((player) => player.id)));
     this.state.selectedGmId = character.id;
-    this.setMessage(token.name ? `Linked token and renamed character to ${token.name}.` : "Token linked to character.");
+    this.state.draftCharacter = createBlankCharacter();
+    this.setMessage(token.name ? `Created character from token: ${token.name}.` : "Token linked to character.");
   }
 
   private editPowerList(button: HTMLButtonElement): void {

@@ -107,9 +107,15 @@ function libraryForm(kind: "essence" | "confluence", item?: Essence | Confluence
   `;
 }
 
-export function gmView(data: EssenceData, players: PlayerInfo[], tab: string, selectedId: string | null): string {
+export function gmView(
+  data: EssenceData,
+  players: PlayerInfo[],
+  tab: string,
+  selectedId: string | null,
+  draftCharacter: Character = createBlankCharacter(),
+): string {
   const active = tab || "characters";
-  const character = selectedId ? data.characters[selectedId] : undefined;
+  const character = selectedId ? data.characters[selectedId] : draftCharacter;
   const essence = selectedId ? data.essences[selectedId] : undefined;
   const confluence = selectedId ? data.confluences[selectedId] : undefined;
 
