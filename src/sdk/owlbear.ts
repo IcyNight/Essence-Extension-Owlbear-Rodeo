@@ -143,8 +143,4 @@ export async function closePinnedActiveConfluence(): Promise<void> {
   await OBR.modal.close(PINNED_ACTIVE_CONFLUENCE_ID).catch(() => undefined);
 }
 
-export async function closeActionPopover(): Promise<void> {
-  await OBR.action.close().catch(() => undefined);
-}
-
 export { OBR };

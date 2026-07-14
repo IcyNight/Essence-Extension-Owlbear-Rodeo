@@ -7,7 +7,6 @@ import {
   getSceneTokenInfo,
   getSelectedTokenId,
   getForgeTurnState,
-  closeActionPopover,
   onPartyChange,
   onForgeTurnChange,
   onPlayerChange,
@@ -271,7 +270,6 @@ export class EssencePowersApp {
   private async pinActiveConfluence(): Promise<void> {
     if (this.state.actor.role !== "GM") return;
     await openPinnedActiveConfluence();
-    await closeActionPopover();
   }
 
   private async handleForgeTurnChange(currentTurnTokenId: string | null, currentRound: number): Promise<void> {
