@@ -374,9 +374,11 @@ export class EssencePowersApp {
     const tokenInput = form?.querySelector<HTMLInputElement>('input[name="tokenId"]');
     const nameInput = form?.querySelector<HTMLInputElement>('input[name="name"]');
     const ownerInput = form?.querySelector<HTMLSelectElement>('select[name="ownerPlayerId"]');
+    const visibleInput = form?.querySelector<HTMLInputElement>('input[name="visibleToPlayers"]');
     if (tokenInput) tokenInput.value = token.id;
     if (nameInput && token.name) nameInput.value = token.name;
     if (ownerInput && ownerPlayerId) ownerInput.value = ownerPlayerId;
+    if (visibleInput && ownerPlayerId) visibleInput.checked = true;
 
     if (!form) {
       if (!characterId) return;
@@ -392,6 +394,7 @@ export class EssencePowersApp {
           name: token.name || base.name,
           ownerPlayerId: ownerPlayerId || base.ownerPlayerId,
           tokenId: token.id,
+          visibleToPlayers: ownerPlayerId ? true : base.visibleToPlayers,
         };
         return saveCharacter(
           data,
@@ -402,7 +405,11 @@ export class EssencePowersApp {
       });
       this.state.selectedGmId = characterId;
       this.state.draftCharacter = createBlankCharacter();
-      this.setMessage(token.name ? `Created character from token: ${token.name}.` : "Token linked to character.");
+      this.setMessage(
+        token.name
+          ? `Created visible character from token: ${token.name}.`
+          : "Token linked to character.",
+      );
       return;
     }
 
@@ -410,7 +417,7 @@ export class EssencePowersApp {
     await updateData((data) => saveCharacter(data, this.state.actor, character, this.state.players.map((player) => player.id)));
     this.state.selectedGmId = character.id;
     this.state.draftCharacter = createBlankCharacter();
-    const ownerMessage = ownerPlayerId ? " Owner filled from token." : "";
+    const ownerMessage = ownerPlayerId ? " Owner and visibility filled from token." : "";
     this.setMessage(
       token.name ? `Created character from token: ${token.name}.${ownerMessage}` : `Token linked to character.${ownerMessage}`,
     );
