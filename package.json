@@ -1,0 +1,21 @@
+{
+  "name": "essence-powers",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Owlbear Rodeo extension for D&D homebrew essence and confluence powers.",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@owlbear-rodeo/sdk": "^3.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.4"
+  }
+}
