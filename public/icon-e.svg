@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Essence Powers icon">
+  <rect width="128" height="128" rx="24" fill="#17120f"/>
+  <rect x="10" y="10" width="108" height="108" rx="18" fill="#2b211c" stroke="#d8a24b" stroke-width="6"/>
+  <path
+    d="M41 28h56v16H59v13h32v15H59v12h39v16H41V28Z"
+    fill="#f7ebd1"
+  />
+  <path d="M41 28h56v7H48v65h-7V28Z" fill="#f0c15b" opacity="0.75"/>
+</svg>
