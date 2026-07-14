@@ -2,7 +2,14 @@ import { Character, Confluence, Essence, EssenceData, PlayerInfo, Power, createE
 import { createSampleData } from "./data/sampleData";
 import { numberValue, textValue, bindClick, bindSubmit, qs } from "./ui/dom";
 import { Actor, getVisibleCharacters } from "./sdk/permissions";
-import { getPlayers, getSelectedTokenId, onPartyChange, onPlayerChange, onSelectionChange } from "./sdk/owlbear";
+import {
+  getPlayers,
+  getSceneTokenInfo,
+  getSelectedTokenId,
+  onPartyChange,
+  onPlayerChange,
+  onSelectionChange,
+} from "./sdk/owlbear";
 import { onDataChange, readData, updateData, writeData } from "./sdk/storage";
 import { playerView } from "./ui/playerView";
 import { gmView } from "./ui/gmView";
@@ -84,7 +91,6 @@ export class EssencePowersApp {
 
     try {
       await this.assignTokenToCharacter(characterId, tokenId);
-      this.setMessage("Token linked to character.");
     } catch (error) {
       this.setMessage("", error instanceof Error ? error.message : "Unable to link token.");
     }
@@ -346,19 +352,36 @@ export class EssencePowersApp {
       return;
     }
     await this.assignTokenToCharacter(characterId, tokenId);
-    this.setMessage("Token linked to character.");
   }
 
   private async assignTokenToCharacter(characterId: string | undefined, tokenId: string): Promise<void> {
+    const token = await getSceneTokenInfo(tokenId);
     const form = qs<HTMLFormElement>(this.root, '[data-form="character"]');
-    const input = form?.querySelector<HTMLInputElement>('input[name="tokenId"]');
-    if (input) input.value = tokenId;
-    if (!characterId) return;
-    await updateData((data) => {
-      const character = data.characters[characterId];
-      if (!character) throw new Error("Character not found. Save the character before linking a token.");
-      return saveCharacter(data, this.state.actor, { ...character, tokenId }, this.state.players.map((player) => player.id));
-    });
+    const tokenInput = form?.querySelector<HTMLInputElement>('input[name="tokenId"]');
+    const nameInput = form?.querySelector<HTMLInputElement>('input[name="name"]');
+    if (tokenInput) tokenInput.value = token.id;
+    if (nameInput && token.name) nameInput.value = token.name;
+
+    if (!form) {
+      if (!characterId) return;
+      await updateData((data) => {
+        const character = data.characters[characterId];
+        if (!character) throw new Error("Character not found. Save the character before linking a token.");
+        return saveCharacter(
+          data,
+          this.state.actor,
+          { ...character, name: token.name || character.name, tokenId: token.id },
+          this.state.players.map((player) => player.id),
+        );
+      });
+      this.setMessage(token.name ? `Linked token: ${token.name}.` : "Token linked to character.");
+      return;
+    }
+
+    const character = this.characterFromForm(form);
+    await updateData((data) => saveCharacter(data, this.state.actor, character, this.state.players.map((player) => player.id)));
+    this.state.selectedGmId = character.id;
+    this.setMessage(token.name ? `Linked token and renamed character to ${token.name}.` : "Token linked to character.");
   }
 
   private editPowerList(button: HTMLButtonElement): void {

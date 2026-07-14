@@ -1,6 +1,11 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { PlayerInfo, PlayerRole } from "../data/schema";
 
+export type SceneTokenInfo = {
+  id: string;
+  name: string;
+};
+
 export async function waitForOwlbear(): Promise<boolean> {
   if (typeof window === "undefined") return false;
   if (!window.location.ancestorOrigins && window.self === window.top) {
@@ -41,6 +46,20 @@ export async function getSelectedTokenId(): Promise<string | null> {
     return selection?.[0] ?? null;
   } catch {
     return null;
+  }
+}
+
+export async function getSceneTokenInfo(itemId: string): Promise<SceneTokenInfo> {
+  try {
+    const ready = await OBR.scene.isReady();
+    if (!ready) return { id: itemId, name: "" };
+    const [item] = await OBR.scene.items.getItems([itemId]);
+    return {
+      id: itemId,
+      name: typeof item?.name === "string" ? item.name.trim() : "",
+    };
+  } catch {
+    return { id: itemId, name: "" };
   }
 }
 
