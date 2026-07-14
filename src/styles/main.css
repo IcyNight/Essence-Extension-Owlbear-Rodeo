@@ -16,6 +16,16 @@ body {
   background: radial-gradient(circle at top left, rgba(185, 65, 47, 0.22), transparent 34%), #120f0d;
 }
 
+html.pinned-mode,
+body.pinned-mode {
+  min-width: 0;
+  background: transparent;
+}
+
+body.pinned-mode {
+  overflow: hidden;
+}
+
 button,
 input,
 select,
@@ -82,6 +92,10 @@ p {
   display: grid;
   place-content: center;
   text-align: center;
+}
+
+body.pinned-mode .loading {
+  background: transparent;
 }
 
 .app-header {
