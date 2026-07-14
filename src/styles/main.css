@@ -309,16 +309,10 @@ body.pinned-mode .loading {
   gap: 0.35rem;
 }
 
-.pinned-overlay {
-  position: fixed;
-  inset: 0;
-  background: transparent;
-}
-
 .pinned-confluence {
-  position: absolute;
-  min-width: 220px;
-  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   padding: 0.7rem;
   border: 1px solid rgba(216, 162, 75, 0.5);
   border-radius: 8px;
@@ -334,7 +328,6 @@ body.pinned-mode .loading {
   gap: 0.5rem;
   margin-bottom: 0.55rem;
   border-bottom: 1px solid rgba(216, 162, 75, 0.35);
-  cursor: move;
   user-select: none;
 }
 
@@ -352,30 +345,10 @@ body.pinned-mode .loading {
 }
 
 .pinned-confluence .active-confluence-list {
-  max-height: calc(100% - 44px);
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   padding-right: 0.1rem;
-}
-
-.resize-handle {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 22px;
-  height: 22px;
-  cursor: nwse-resize;
-}
-
-.resize-handle::after {
-  content: "";
-  position: absolute;
-  right: 5px;
-  bottom: 5px;
-  width: 10px;
-  height: 10px;
-  border-right: 2px solid #f0c15b;
-  border-bottom: 2px solid #f0c15b;
-  opacity: 0.8;
 }
 
 .compact-empty {

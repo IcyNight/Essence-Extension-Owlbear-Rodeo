@@ -11,14 +11,6 @@ const FORGE_UNIT_NAME_KEY = "com.battle-system.forge/name";
 const FORGE_CURRENT_TURN_KEY = "com.battle-system.forge/currturn";
 const FORGE_CURRENT_ROUND_KEY = "com.battle-system.forge/currround";
 const PINNED_ACTIVE_CONFLUENCE_ID = "com.codex.essence-powers/active-confluence";
-const PINNED_ACTIVE_CONFLUENCE_BOUNDS_KEY = "essence-powers.active-confluence.bounds";
-
-export type PinnedActiveConfluenceBounds = {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-};
 
 export async function waitForOwlbear(): Promise<boolean> {
   if (typeof window === "undefined") return false;
@@ -126,35 +118,29 @@ export function onForgeTurnChange(callback: (state: ForgeTurnState) => void): ()
   });
 }
 
-export async function openPinnedActiveConfluence(bounds?: Partial<PinnedActiveConfluenceBounds>): Promise<void> {
-  let saved: Partial<PinnedActiveConfluenceBounds> = {};
-  try {
-    saved = JSON.parse(localStorage.getItem(PINNED_ACTIVE_CONFLUENCE_BOUNDS_KEY) ?? "{}");
-  } catch {
-    saved = {};
-  }
-  const nextBounds = { ...saved, ...bounds };
-  const left = Math.max(0, Math.floor(nextBounds.left ?? 80));
-  const top = Math.max(0, Math.floor(nextBounds.top ?? 80));
-  const width = Math.max(220, Math.floor(nextBounds.width ?? 280));
-  const height = Math.max(160, Math.floor(nextBounds.height ?? 240));
+export async function openPinnedActiveConfluence(): Promise<void> {
+  const [viewportWidth, viewportHeight] = await Promise.all([OBR.viewport.getWidth(), OBR.viewport.getHeight()]);
   const url = new URL(window.location.href);
   url.searchParams.set("view", "active-confluence");
-  url.searchParams.set("x", String(left));
-  url.searchParams.set("y", String(top));
-  url.searchParams.set("w", String(width));
-  url.searchParams.set("h", String(height));
-  await OBR.modal.open({
+  url.searchParams.set("pinned", "true");
+  await OBR.modal.close(PINNED_ACTIVE_CONFLUENCE_ID).catch(() => undefined);
+  await OBR.popover.open({
     id: PINNED_ACTIVE_CONFLUENCE_ID,
     url: `${url.pathname}${url.search}`,
-    fullScreen: true,
-    hideBackdrop: true,
+    height: Math.min(400, Math.max(240, viewportHeight - 100)),
+    width: 350,
+    anchorPosition: { top: 50, left: viewportWidth - 70 },
+    anchorReference: "POSITION",
+    anchorOrigin: { vertical: "CENTER", horizontal: "RIGHT" },
+    transformOrigin: { vertical: "CENTER", horizontal: "RIGHT" },
     hidePaper: true,
+    disableClickAway: true,
   });
 }
 
 export async function closePinnedActiveConfluence(): Promise<void> {
-  await OBR.modal.close(PINNED_ACTIVE_CONFLUENCE_ID);
+  await OBR.popover.close(PINNED_ACTIVE_CONFLUENCE_ID).catch(() => undefined);
+  await OBR.modal.close(PINNED_ACTIVE_CONFLUENCE_ID).catch(() => undefined);
 }
 
 export { OBR };
