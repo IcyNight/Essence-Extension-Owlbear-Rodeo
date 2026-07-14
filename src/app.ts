@@ -14,6 +14,7 @@ import {
   onPlayerChange,
   onSelectionChange,
   openPinnedActiveConfluence,
+  onSceneReadyChange,
   selectConfluenceAreaShape,
   showConfluenceReminder,
 } from "./sdk/owlbear";
@@ -44,6 +45,7 @@ type AppState = {
   pendingTokenCharacterId: string | null;
   pendingConfluenceAreaCharacterId: string | null;
   lastForgeTurnTokenId: string | null;
+  lastForgeRound: number;
   activeConfluenceOpen: boolean;
   message: string;
   error: string;
@@ -73,6 +75,7 @@ export class EssencePowersApp {
       pendingTokenCharacterId: null,
       pendingConfluenceAreaCharacterId: null,
       lastForgeTurnTokenId: null,
+      lastForgeRound: 1,
       activeConfluenceOpen: false,
       message: "",
       error: "",
@@ -83,6 +86,7 @@ export class EssencePowersApp {
     this.render();
     getForgeTurnState().then((state) => {
       this.state.lastForgeTurnTokenId = state.currentTurnTokenId;
+      this.state.lastForgeRound = state.currentRound;
     });
     this.unsubscribers.push(
       onDataChange((data) => {
@@ -94,6 +98,13 @@ export class EssencePowersApp {
       onSelectionChange((selection) => this.capturePendingTokenSelection(selection)),
       onPartyChange(() => this.refreshPlayers()),
       onForgeTurnChange((state) => this.handleForgeTurnChange(state.currentTurnTokenId, state.currentRound)),
+      onSceneReadyChange((ready) => {
+        if (!ready) return;
+        getForgeTurnState().then((state) => {
+          this.state.lastForgeTurnTokenId = state.currentTurnTokenId;
+          this.state.lastForgeRound = state.currentRound;
+        });
+      }),
     );
   }
 
@@ -297,13 +308,15 @@ export class EssencePowersApp {
 
   private async handleForgeTurnChange(currentTurnTokenId: string | null, currentRound: number): Promise<void> {
     const previousTurnTokenId = this.state.lastForgeTurnTokenId;
-    if (previousTurnTokenId === currentTurnTokenId) return;
+    const previousRound = this.state.lastForgeRound;
+    if (previousTurnTokenId === currentTurnTokenId && previousRound === currentRound) return;
     this.state.lastForgeTurnTokenId = currentTurnTokenId;
+    this.state.lastForgeRound = currentRound;
     if (!previousTurnTokenId || this.state.actor.role !== "GM") return;
     const eventKey = `${previousTurnTokenId}->${currentTurnTokenId ?? "none"}@${currentRound}`;
     await updateData(async (data) => {
       if (data.lastProcessedForgeTurnEvent === eventKey) return data;
-      const notifications = await createConfluenceAreaNotifications(data, previousTurnTokenId, eventKey);
+      const notifications = await createConfluenceAreaNotifications(data, previousTurnTokenId, eventKey, this.state.actor.playerId);
       const ticked = applyForgeTurnConfluenceTick(data, this.state.actor, previousTurnTokenId, currentTurnTokenId, currentRound);
       if (notifications.length === 0) return ticked;
       const seen = new Set(ticked.confluenceNotifications.map((event) => event.id));

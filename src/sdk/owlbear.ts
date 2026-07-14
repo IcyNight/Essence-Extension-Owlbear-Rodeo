@@ -126,6 +126,10 @@ export function onForgeTurnChange(callback: (state: ForgeTurnState) => void): ()
   });
 }
 
+export function onSceneReadyChange(callback: (ready: boolean) => void): () => void {
+  return OBR.scene.onReadyChange(callback);
+}
+
 export async function selectConfluenceAreaShape(itemId: string): Promise<boolean> {
   const [item] = await OBR.scene.items.getItems([itemId]);
   if (!item || !isShape(item)) return false;
@@ -151,6 +155,18 @@ function pointInShapeArea(point: { x: number; y: number }, area: ShapeArea): boo
     if (radiusX <= 0 || radiusY <= 0) return false;
     return (dx * dx) / (radiusX * radiusX) + (dy * dy) / (radiusY * radiusY) <= 1;
   }
+  if (area.shape.shapeType === "TRIANGLE") {
+    const halfWidth = area.width / 2;
+    const halfHeight = area.height / 2;
+    if (halfWidth <= 0 || halfHeight <= 0) return false;
+    const localX = point.x - area.center.x;
+    const localY = point.y - area.center.y;
+    const topY = -halfHeight;
+    const bottomY = halfHeight;
+    if (localY < topY || localY > bottomY) return false;
+    const widthAtY = ((localY - topY) / area.height) * area.width;
+    return Math.abs(localX) <= widthAtY / 2;
+  }
   return dx <= area.width / 2 && dy <= area.height / 2;
 }
 
@@ -169,7 +185,7 @@ async function getSavedShapeAreas(characters: Character[]): Promise<ShapeArea[]>
   const areas: ShapeArea[] = [];
   for (const character of active) {
     const item = items.find((candidate) => candidate.id === character.confluenceAreaItemId);
-    if (!item || !isShape(item) || item.shapeType !== "CIRCLE") continue;
+    if (!item || !isShape(item)) continue;
     const bounds = await OBR.scene.items.getItemBounds([item.id]);
     areas.push({
       character,
@@ -182,15 +198,16 @@ async function getSavedShapeAreas(characters: Character[]): Promise<ShapeArea[]>
   return areas;
 }
 
-function notificationOwnerForToken(token: SceneTokenInfo, data: EssenceData): string {
+function notificationOwnerForToken(token: SceneTokenInfo, data: EssenceData, gmPlayerId: string): string {
   const character = Object.values(data.characters).find((item) => item.tokenId === token.id);
-  return character?.ownerPlayerId || token.ownerPlayerId;
+  return character?.ownerPlayerId || token.ownerPlayerId || gmPlayerId;
 }
 
 export async function createConfluenceAreaNotifications(
   data: EssenceData,
   previousTurnTokenId: string,
   eventKey: string,
+  gmPlayerId: string,
 ): Promise<ConfluenceNotification[]> {
   const ready = await OBR.scene.isReady();
   if (!ready) return [];
@@ -202,7 +219,7 @@ export async function createConfluenceAreaNotifications(
   if (!areas.some((area) => pointInShapeArea(tokenCenter, area))) return [];
 
   const token = await getSceneTokenInfo(previousTurnTokenId);
-  const ownerPlayerId = notificationOwnerForToken(token, data);
+  const ownerPlayerId = notificationOwnerForToken(token, data, gmPlayerId);
   if (!ownerPlayerId) return [];
   const name = token.name || tokenItem.name || "Token";
   return [
