@@ -4,6 +4,7 @@ import { PlayerInfo, PlayerRole } from "../data/schema";
 export type SceneTokenInfo = {
   id: string;
   name: string;
+  ownerPlayerId: string;
 };
 
 const FORGE_UNIT_NAME_KEY = "com.battle-system.forge/name";
@@ -54,17 +55,19 @@ export async function getSelectedTokenId(): Promise<string | null> {
 export async function getSceneTokenInfo(itemId: string): Promise<SceneTokenInfo> {
   try {
     const ready = await OBR.scene.isReady();
-    if (!ready) return { id: itemId, name: "" };
+    if (!ready) return { id: itemId, name: "", ownerPlayerId: "" };
     const [item] = await OBR.scene.items.getItems([itemId]);
     const metadata = item?.metadata as Record<string, unknown> | undefined;
     const forgeName = metadata ? metadata[FORGE_UNIT_NAME_KEY] : "";
     const itemName = typeof item?.name === "string" ? item.name.trim() : "";
+    const ownerPlayerId = typeof item?.createdUserId === "string" ? item.createdUserId : "";
     return {
       id: itemId,
       name: typeof forgeName === "string" && forgeName.trim() ? forgeName.trim() : itemName,
+      ownerPlayerId,
     };
   } catch {
-    return { id: itemId, name: "" };
+    return { id: itemId, name: "", ownerPlayerId: "" };
   }
 }
 

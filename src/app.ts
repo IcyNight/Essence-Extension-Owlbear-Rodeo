@@ -367,11 +367,16 @@ export class EssencePowersApp {
 
   private async assignTokenToCharacter(characterId: string | undefined, tokenId: string): Promise<void> {
     const token = await getSceneTokenInfo(tokenId);
+    const ownerPlayerId = this.state.players.some((player) => player.id === token.ownerPlayerId)
+      ? token.ownerPlayerId
+      : "";
     const form = qs<HTMLFormElement>(this.root, '[data-form="character"]');
     const tokenInput = form?.querySelector<HTMLInputElement>('input[name="tokenId"]');
     const nameInput = form?.querySelector<HTMLInputElement>('input[name="name"]');
+    const ownerInput = form?.querySelector<HTMLSelectElement>('select[name="ownerPlayerId"]');
     if (tokenInput) tokenInput.value = token.id;
     if (nameInput && token.name) nameInput.value = token.name;
+    if (ownerInput && ownerPlayerId) ownerInput.value = ownerPlayerId;
 
     if (!form) {
       if (!characterId) return;
@@ -385,6 +390,7 @@ export class EssencePowersApp {
         const character = {
           ...base,
           name: token.name || base.name,
+          ownerPlayerId: ownerPlayerId || base.ownerPlayerId,
           tokenId: token.id,
         };
         return saveCharacter(
@@ -404,7 +410,10 @@ export class EssencePowersApp {
     await updateData((data) => saveCharacter(data, this.state.actor, character, this.state.players.map((player) => player.id)));
     this.state.selectedGmId = character.id;
     this.state.draftCharacter = createBlankCharacter();
-    this.setMessage(token.name ? `Created character from token: ${token.name}.` : "Token linked to character.");
+    const ownerMessage = ownerPlayerId ? " Owner filled from token." : "";
+    this.setMessage(
+      token.name ? `Created character from token: ${token.name}.${ownerMessage}` : `Token linked to character.${ownerMessage}`,
+    );
   }
 
   private editPowerList(button: HTMLButtonElement): void {
