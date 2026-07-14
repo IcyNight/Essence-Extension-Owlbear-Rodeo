@@ -1,6 +1,13 @@
 import { EssenceData } from "./data/schema";
 import { Actor } from "./sdk/permissions";
-import { getForgeTurnState, onForgeTurnChange } from "./sdk/owlbear";
+import {
+  closePinnedActiveConfluence,
+  getForgeTurnState,
+  onForgeTurnChange,
+  openPinnedActiveConfluence,
+  PinnedActiveConfluenceBounds,
+  resizePinnedActiveConfluence,
+} from "./sdk/owlbear";
 import { onDataChange, readData, updateData } from "./sdk/storage";
 import { applyForgeTurnConfluenceTick } from "./services/resourceService";
 import { escapeHtml } from "./ui/dom";
@@ -9,7 +16,24 @@ type ActiveConfluenceState = {
   data: EssenceData;
   actor: Actor;
   lastForgeTurnTokenId: string | null;
+  bounds: PinnedActiveConfluenceBounds;
 };
+
+const MIN_WIDTH = 220;
+const MIN_HEIGHT = 160;
+function boundsFromUrl(): PinnedActiveConfluenceBounds {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    left: Math.max(0, Number(params.get("x") ?? 80)),
+    top: Math.max(0, Number(params.get("y") ?? 80)),
+    width: Math.max(MIN_WIDTH, Number(params.get("w") ?? 280)),
+    height: Math.max(MIN_HEIGHT, Number(params.get("h") ?? 240)),
+  };
+}
+
+function saveBounds(bounds: PinnedActiveConfluenceBounds): void {
+  localStorage.setItem("essence-powers.active-confluence.bounds", JSON.stringify(bounds));
+}
 
 function activeConfluenceList(data: EssenceData): string {
   const active = Object.values(data.characters)
@@ -45,6 +69,7 @@ export class ActiveConfluenceApp {
       actor,
       data,
       lastForgeTurnTokenId: null,
+      bounds: boundsFromUrl(),
     };
   }
 
@@ -71,12 +96,73 @@ export class ActiveConfluenceApp {
       <main class="pinned-confluence">
         <header>
           <h1>Active confluence</h1>
+          <button type="button" data-action="close-pinned" aria-label="Close pinned tracker">x</button>
         </header>
         <section class="active-confluence-list">
           ${activeConfluenceList(this.state.data)}
         </section>
+        <div class="resize-handle" title="Resize"></div>
       </main>
     `;
+    this.bindEvents();
+  }
+
+  private bindEvents(): void {
+    const header = this.root.querySelector<HTMLElement>(".pinned-confluence header");
+    const resizeHandle = this.root.querySelector<HTMLElement>(".resize-handle");
+    const closeButton = this.root.querySelector<HTMLButtonElement>('[data-action="close-pinned"]');
+    header?.addEventListener("pointerdown", (event) => this.startMove(event));
+    resizeHandle?.addEventListener("pointerdown", (event) => this.startResize(event));
+    closeButton?.addEventListener("click", () => closePinnedActiveConfluence());
+  }
+
+  private startMove(event: PointerEvent): void {
+    if ((event.target as HTMLElement).closest("button")) return;
+    event.preventDefault();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startBounds = { ...this.state.bounds };
+
+    const onPointerUp = (moveEvent: PointerEvent) => {
+      window.removeEventListener("pointerup", onPointerUp);
+      const next = {
+        ...startBounds,
+        left: Math.max(0, startBounds.left + moveEvent.clientX - startX),
+        top: Math.max(0, startBounds.top + moveEvent.clientY - startY),
+      };
+      this.state.bounds = next;
+      saveBounds(next);
+      openPinnedActiveConfluence(next);
+    };
+
+    window.addEventListener("pointerup", onPointerUp, { once: true });
+  }
+
+  private startResize(event: PointerEvent): void {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startBounds = { ...this.state.bounds };
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const next = {
+        ...startBounds,
+        width: Math.max(MIN_WIDTH, startBounds.width + moveEvent.clientX - startX),
+        height: Math.max(MIN_HEIGHT, startBounds.height + moveEvent.clientY - startY),
+      };
+      this.state.bounds = next;
+      saveBounds(next);
+      resizePinnedActiveConfluence(next.width, next.height);
+    };
+
+    const onPointerUp = () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      openPinnedActiveConfluence(this.state.bounds);
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp, { once: true });
   }
 
   private async handleForgeTurnChange(currentTurnTokenId: string | null, currentRound: number): Promise<void> {

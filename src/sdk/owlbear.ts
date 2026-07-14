@@ -10,7 +10,15 @@ export type SceneTokenInfo = {
 const FORGE_UNIT_NAME_KEY = "com.battle-system.forge/name";
 const FORGE_CURRENT_TURN_KEY = "com.battle-system.forge/currturn";
 const FORGE_CURRENT_ROUND_KEY = "com.battle-system.forge/currround";
-const PINNED_ACTIVE_CONFLUENCE_MODAL_ID = "com.codex.essence-powers/active-confluence";
+const PINNED_ACTIVE_CONFLUENCE_ID = "com.codex.essence-powers/active-confluence";
+const PINNED_ACTIVE_CONFLUENCE_BOUNDS_KEY = "essence-powers.active-confluence.bounds";
+
+export type PinnedActiveConfluenceBounds = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
 
 export async function waitForOwlbear(): Promise<boolean> {
   if (typeof window === "undefined") return false;
@@ -118,16 +126,47 @@ export function onForgeTurnChange(callback: (state: ForgeTurnState) => void): ()
   });
 }
 
-export async function openPinnedActiveConfluence(): Promise<void> {
+export async function openPinnedActiveConfluence(bounds?: Partial<PinnedActiveConfluenceBounds>): Promise<void> {
+  let saved: Partial<PinnedActiveConfluenceBounds> = {};
+  try {
+    saved = JSON.parse(localStorage.getItem(PINNED_ACTIVE_CONFLUENCE_BOUNDS_KEY) ?? "{}");
+  } catch {
+    saved = {};
+  }
+  const nextBounds = { ...saved, ...bounds };
+  const left = Math.max(0, Math.floor(nextBounds.left ?? 80));
+  const top = Math.max(0, Math.floor(nextBounds.top ?? 80));
+  const width = Math.max(220, Math.floor(nextBounds.width ?? 280));
+  const height = Math.max(160, Math.floor(nextBounds.height ?? 240));
   const url = new URL(window.location.href);
   url.searchParams.set("view", "active-confluence");
-  await OBR.modal.open({
-    id: PINNED_ACTIVE_CONFLUENCE_MODAL_ID,
+  url.searchParams.set("x", String(left));
+  url.searchParams.set("y", String(top));
+  url.searchParams.set("w", String(width));
+  url.searchParams.set("h", String(height));
+  await OBR.popover.open({
+    id: PINNED_ACTIVE_CONFLUENCE_ID,
     url: `${url.pathname}${url.search}`,
-    width: 260,
-    height: 220,
-    hideBackdrop: true,
+    width,
+    height,
+    anchorReference: "POSITION",
+    anchorPosition: { left, top },
+    anchorOrigin: { horizontal: "LEFT", vertical: "TOP" },
+    transformOrigin: { horizontal: "LEFT", vertical: "TOP" },
+    disableClickAway: true,
+    marginThreshold: 0,
   });
+}
+
+export async function resizePinnedActiveConfluence(width: number, height: number): Promise<void> {
+  await Promise.all([
+    OBR.popover.setWidth(PINNED_ACTIVE_CONFLUENCE_ID, Math.max(220, Math.floor(width))),
+    OBR.popover.setHeight(PINNED_ACTIVE_CONFLUENCE_ID, Math.max(160, Math.floor(height))),
+  ]);
+}
+
+export async function closePinnedActiveConfluence(): Promise<void> {
+  await OBR.popover.close(PINNED_ACTIVE_CONFLUENCE_ID);
 }
 
 export { OBR };
