@@ -64,9 +64,10 @@ describe("resource logic", () => {
   });
 
   it("restores both resources on long rest", () => {
-    const rested = longRest(dataFixture().characters.hero);
+    const rested = longRest({ ...dataFixture().characters.hero, confluenceRoundsRemaining: 6 });
     expect(rested.essencePoints.current).toBe(6);
     expect(rested.confluenceUses.current).toBe(2);
+    expect(rested.confluenceRoundsRemaining).toBe(0);
   });
 
   it("starts confluence rounds at 10", () => {

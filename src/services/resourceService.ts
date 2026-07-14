@@ -29,6 +29,7 @@ export function longRest(character: Character): Character {
       ...character.confluenceUses,
       current: restoreResource(character.confluenceUses.max),
     },
+    confluenceRoundsRemaining: 0,
   };
 }
 
