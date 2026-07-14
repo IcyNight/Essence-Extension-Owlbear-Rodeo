@@ -5,7 +5,14 @@ import { validateCharacter } from "../data/validation";
 import { canPlayerEditResources, canViewCharacter } from "../sdk/permissions";
 import { deleteConfluence } from "./confluenceService";
 import { deleteEssence } from "./essenceService";
-import { activateConfluence, adjustResource, longRest, spendResource, tickConfluenceRound } from "./resourceService";
+import {
+  activateConfluence,
+  adjustResource,
+  applyForgeTurnConfluenceTick,
+  longRest,
+  spendResource,
+  tickConfluenceRound,
+} from "./resourceService";
 
 const gm = { role: "GM" as const, playerId: "gm" };
 const player = { role: "PLAYER" as const, playerId: "player-1" };
@@ -27,7 +34,7 @@ function dataFixture(): EssenceData {
         id: "hero",
         name: "Hero",
         ownerPlayerId: "player-1",
-        tokenId: null,
+        tokenId: "token-hero",
         essenceIds: ["fire"],
         confluenceId: "forge",
         essencePoints: { current: 2, max: 6 },
@@ -71,6 +78,21 @@ describe("resource logic", () => {
     const ticked = tickConfluenceRound({ ...dataFixture().characters.hero, confluenceRoundsRemaining: 1 });
     expect(ticked.confluenceRoundsRemaining).toBe(0);
     expect(tickConfluenceRound(ticked).confluenceRoundsRemaining).toBe(0);
+  });
+
+  it("only applies a Forge turn tick once per turn event", () => {
+    const data = dataFixture();
+    const active = {
+      ...data,
+      characters: {
+        ...data.characters,
+        hero: { ...data.characters.hero, confluenceRoundsRemaining: 10 },
+      },
+    };
+    const first = applyForgeTurnConfluenceTick(active, gm, "token-hero", "token-next", 2);
+    const second = applyForgeTurnConfluenceTick(first, gm, "token-hero", "token-next", 2);
+    expect(first.characters.hero.confluenceRoundsRemaining).toBe(9);
+    expect(second.characters.hero.confluenceRoundsRemaining).toBe(9);
   });
 });
 

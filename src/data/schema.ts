@@ -50,6 +50,7 @@ export type EssenceData = {
   essences: Record<string, Essence>;
   confluences: Record<string, Confluence>;
   characters: Record<string, Character>;
+  lastProcessedForgeTurnEvent: string | null;
 };
 
 export type PlayerInfo = {
@@ -63,6 +64,7 @@ export function createEmptyData(): EssenceData {
     essences: {},
     confluences: {},
     characters: {},
+    lastProcessedForgeTurnEvent: null,
   };
 }
 

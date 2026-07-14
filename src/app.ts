@@ -11,6 +11,7 @@ import {
   onForgeTurnChange,
   onPlayerChange,
   onSelectionChange,
+  openPinnedActiveConfluence,
 } from "./sdk/owlbear";
 import { onDataChange, readData, updateData, writeData } from "./sdk/storage";
 import { playerView } from "./ui/playerView";
@@ -19,11 +20,11 @@ import { createBlankCharacter, saveCharacter, deleteCharacter, resetCharacterRes
 import { saveEssence, deleteEssence, createBlankPower } from "./services/essenceService";
 import { saveConfluence, deleteConfluence, createBlankConfluencePower } from "./services/confluenceService";
 import {
+  applyForgeTurnConfluenceTick,
   activateConfluence,
   adjustResource,
   longRest,
   spendResource,
-  tickConfluenceRound,
   updateCharacterResource,
 } from "./services/resourceService";
 
@@ -83,7 +84,7 @@ export class EssencePowersApp {
       onPlayerChange(() => this.refreshPlayers()),
       onSelectionChange((selection) => this.capturePendingTokenSelection(selection)),
       onPartyChange(() => this.refreshPlayers()),
-      onForgeTurnChange((state) => this.handleForgeTurnChange(state.currentTurnTokenId)),
+      onForgeTurnChange((state) => this.handleForgeTurnChange(state.currentTurnTokenId, state.currentRound)),
     );
   }
 
@@ -185,6 +186,7 @@ export class EssencePowersApp {
       else if (action === "resource") await this.adjustResource(button);
       else if (action === "long-rest") await this.longRest();
       else if (action === "active-confluence") this.toggleActiveConfluence();
+      else if (action === "pin-active-confluence") await this.pinActiveConfluence();
       else if (action === "delete-character") await this.deleteCharacter(button.dataset.id);
       else if (action === "reset-character") await this.resetCharacter(button.dataset.id);
       else if (action === "delete-essence") await this.deleteEssence(button.dataset.id);
@@ -265,16 +267,19 @@ export class EssencePowersApp {
     this.render();
   }
 
-  private async handleForgeTurnChange(currentTurnTokenId: string | null): Promise<void> {
+  private async pinActiveConfluence(): Promise<void> {
+    if (this.state.actor.role !== "GM") return;
+    await openPinnedActiveConfluence();
+  }
+
+  private async handleForgeTurnChange(currentTurnTokenId: string | null, currentRound: number): Promise<void> {
     const previousTurnTokenId = this.state.lastForgeTurnTokenId;
     if (previousTurnTokenId === currentTurnTokenId) return;
     this.state.lastForgeTurnTokenId = currentTurnTokenId;
     if (!previousTurnTokenId || this.state.actor.role !== "GM") return;
-    await updateData((data) => {
-      const character = Object.values(data.characters).find((item) => item.tokenId === previousTurnTokenId);
-      if (!character || character.confluenceRoundsRemaining <= 0) return data;
-      return updateCharacterResource(data, this.state.actor, character.id, (item) => tickConfluenceRound(item));
-    });
+    await updateData((data) =>
+      applyForgeTurnConfluenceTick(data, this.state.actor, previousTurnTokenId, currentTurnTokenId, currentRound),
+    );
   }
 
   private async longRest(): Promise<void> {

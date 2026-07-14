@@ -10,6 +10,7 @@ export type SceneTokenInfo = {
 const FORGE_UNIT_NAME_KEY = "com.battle-system.forge/name";
 const FORGE_CURRENT_TURN_KEY = "com.battle-system.forge/currturn";
 const FORGE_CURRENT_ROUND_KEY = "com.battle-system.forge/currround";
+const PINNED_ACTIVE_CONFLUENCE_MODAL_ID = "com.codex.essence-powers/active-confluence";
 
 export async function waitForOwlbear(): Promise<boolean> {
   if (typeof window === "undefined") return false;
@@ -114,6 +115,18 @@ export async function getForgeTurnState(): Promise<ForgeTurnState> {
 export function onForgeTurnChange(callback: (state: ForgeTurnState) => void): () => void {
   return OBR.scene.onMetadataChange((metadata) => {
     callback(forgeTurnStateFromMetadata(metadata));
+  });
+}
+
+export async function openPinnedActiveConfluence(): Promise<void> {
+  const url = new URL(window.location.href);
+  url.searchParams.set("view", "active-confluence");
+  await OBR.modal.open({
+    id: PINNED_ACTIVE_CONFLUENCE_MODAL_ID,
+    url: `${url.pathname}${url.search}`,
+    width: 260,
+    height: 220,
+    hideBackdrop: true,
   });
 }
 

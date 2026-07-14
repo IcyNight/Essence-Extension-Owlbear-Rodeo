@@ -1,4 +1,5 @@
 import "./styles/main.css";
+import { createActiveConfluenceApp } from "./activeConfluenceApp";
 import { createApp } from "./app";
 import { getCurrentPlayer, waitForOwlbear } from "./sdk/owlbear";
 
@@ -20,7 +21,11 @@ async function boot() {
   }
 
   const player = await getCurrentPlayer();
-  const app = await createApp(root, { role: player.role, playerId: player.id, name: player.name });
+  const actor = { role: player.role, playerId: player.id, name: player.name };
+  const app =
+    new URLSearchParams(window.location.search).get("view") === "active-confluence"
+      ? await createActiveConfluenceApp(root, actor)
+      : await createApp(root, actor);
   app.mount();
 }
 

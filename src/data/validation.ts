@@ -116,6 +116,8 @@ export function normalizeData(raw: Partial<EssenceData>): EssenceData {
     essences: {},
     confluences: {},
     characters: {},
+    lastProcessedForgeTurnEvent:
+      typeof raw.lastProcessedForgeTurnEvent === "string" ? raw.lastProcessedForgeTurnEvent : null,
   };
 
   const rawEssences = raw.essences && typeof raw.essences === "object" ? raw.essences : empty.essences;

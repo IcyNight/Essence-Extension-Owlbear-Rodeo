@@ -280,13 +280,40 @@ p {
   margin-bottom: 0.75rem;
 }
 
-.gm-tools > button {
-  justify-self: start;
+.active-confluence-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.icon-button {
+  min-width: 52px;
 }
 
 .active-confluence-list {
   display: grid;
   gap: 0.35rem;
+}
+
+.pinned-confluence {
+  min-height: 100vh;
+  padding: 0.7rem;
+  background: #120f0d;
+}
+
+.pinned-confluence header {
+  margin-bottom: 0.55rem;
+  border-bottom: 1px solid rgba(216, 162, 75, 0.35);
+}
+
+.pinned-confluence h1 {
+  margin-bottom: 0.5rem;
+  color: #f7ebd1;
+  font-size: 1rem;
+}
+
+.compact-empty {
+  margin-bottom: 0;
 }
 
 .secondary {

@@ -48,6 +48,24 @@ export function tickConfluenceRound(character: Character): Character {
   };
 }
 
+export function applyForgeTurnConfluenceTick(
+  data: EssenceData,
+  actor: Actor,
+  previousTurnTokenId: string | null,
+  currentTurnTokenId: string | null,
+  currentRound: number,
+): EssenceData {
+  if (!previousTurnTokenId || actor.role !== "GM") return data;
+  const eventKey = `${previousTurnTokenId}->${currentTurnTokenId ?? "none"}@${currentRound}`;
+  if (data.lastProcessedForgeTurnEvent === eventKey) return data;
+  const character = Object.values(data.characters).find((item) => item.tokenId === previousTurnTokenId);
+  if (!character || character.confluenceRoundsRemaining <= 0) {
+    return { ...data, lastProcessedForgeTurnEvent: eventKey };
+  }
+  const updated = updateCharacterResource(data, actor, character.id, (item) => tickConfluenceRound(item));
+  return { ...updated, lastProcessedForgeTurnEvent: eventKey };
+}
+
 export function updateCharacterResource(
   data: EssenceData,
   actor: Actor,

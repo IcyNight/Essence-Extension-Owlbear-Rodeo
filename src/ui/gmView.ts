@@ -132,7 +132,10 @@ export function gmView(
   return `
     <section class="gm-panel">
       <div class="gm-tools">
-        <button class="secondary" type="button" data-action="active-confluence">Active confluence</button>
+        <div class="active-confluence-actions">
+          <button class="secondary" type="button" data-action="active-confluence">Active confluence</button>
+          <button class="secondary icon-button" type="button" data-action="pin-active-confluence" title="Pin Active confluence">Pin</button>
+        </div>
         ${
           activeConfluenceOpen
             ? `<div class="active-confluence-list">
