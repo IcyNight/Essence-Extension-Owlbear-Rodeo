@@ -104,6 +104,7 @@ function normalizeCharacter(
     confluenceId,
     essencePoints: normalizePool(character.essencePoints),
     confluenceUses: normalizePool(character.confluenceUses),
+    confluenceRoundsRemaining: clamp(Math.floor(Number(character.confluenceRoundsRemaining ?? 0)), 0, 10),
     visibleToPlayers: Boolean(character.visibleToPlayers),
   };
 }

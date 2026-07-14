@@ -32,6 +32,22 @@ export function longRest(character: Character): Character {
   };
 }
 
+export function activateConfluence(character: Character, rounds = 10): Character {
+  return {
+    ...character,
+    confluenceRoundsRemaining: Math.max(0, Math.floor(rounds)),
+  };
+}
+
+export function tickConfluenceRound(character: Character): Character {
+  const remaining = Math.max(0, Math.floor(character.confluenceRoundsRemaining ?? 0));
+  if (remaining <= 0) return character;
+  return {
+    ...character,
+    confluenceRoundsRemaining: remaining - 1,
+  };
+}
+
 export function updateCharacterResource(
   data: EssenceData,
   actor: Actor,

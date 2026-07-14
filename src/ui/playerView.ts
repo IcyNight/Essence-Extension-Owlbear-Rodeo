@@ -95,6 +95,11 @@ export function playerView(data: EssenceData, actor: Actor, selectedCharacterId:
         ${resourceCounter("Essence Points", character.essencePoints, "essencePoints", canRestoreResources)}
         ${resourceCounter("Confluence Uses", character.confluenceUses, "confluenceUses", canRestoreResources)}
         <button class="lr-button" type="button" data-action="long-rest">LR</button>
+        ${
+          character.confluenceRoundsRemaining > 0
+            ? `<div class="rounds-remaining"><strong>Rounds Remaining:</strong><span>${character.confluenceRoundsRemaining}</span></div>`
+            : ""
+        }
       </footer>
     </section>
   `;

@@ -41,6 +41,7 @@ export type Character = {
   confluenceId: string | null;
   essencePoints: ResourcePool;
   confluenceUses: ResourcePool;
+  confluenceRoundsRemaining: number;
   visibleToPlayers: boolean;
 };
 

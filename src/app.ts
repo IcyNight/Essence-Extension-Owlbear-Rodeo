@@ -6,7 +6,9 @@ import {
   getPlayers,
   getSceneTokenInfo,
   getSelectedTokenId,
+  getForgeTurnState,
   onPartyChange,
+  onForgeTurnChange,
   onPlayerChange,
   onSelectionChange,
 } from "./sdk/owlbear";
@@ -16,7 +18,14 @@ import { gmView } from "./ui/gmView";
 import { createBlankCharacter, saveCharacter, deleteCharacter, resetCharacterResources } from "./services/characterService";
 import { saveEssence, deleteEssence, createBlankPower } from "./services/essenceService";
 import { saveConfluence, deleteConfluence, createBlankConfluencePower } from "./services/confluenceService";
-import { adjustResource, longRest, spendResource, updateCharacterResource } from "./services/resourceService";
+import {
+  activateConfluence,
+  adjustResource,
+  longRest,
+  spendResource,
+  tickConfluenceRound,
+  updateCharacterResource,
+} from "./services/resourceService";
 
 type AppState = {
   data: EssenceData;
@@ -28,6 +37,8 @@ type AppState = {
   selectedGmId: string | null;
   draftCharacter: Character;
   pendingTokenCharacterId: string | null;
+  lastForgeTurnTokenId: string | null;
+  activeConfluenceOpen: boolean;
   message: string;
   error: string;
 };
@@ -52,6 +63,8 @@ export class EssencePowersApp {
       selectedGmId: null,
       draftCharacter: createBlankCharacter(),
       pendingTokenCharacterId: null,
+      lastForgeTurnTokenId: null,
+      activeConfluenceOpen: false,
       message: "",
       error: "",
     };
@@ -59,6 +72,9 @@ export class EssencePowersApp {
 
   mount(): void {
     this.render();
+    getForgeTurnState().then((state) => {
+      this.state.lastForgeTurnTokenId = state.currentTurnTokenId;
+    });
     this.unsubscribers.push(
       onDataChange((data) => {
         this.state.data = data;
@@ -67,6 +83,7 @@ export class EssencePowersApp {
       onPlayerChange(() => this.refreshPlayers()),
       onSelectionChange((selection) => this.capturePendingTokenSelection(selection)),
       onPartyChange(() => this.refreshPlayers()),
+      onForgeTurnChange((state) => this.handleForgeTurnChange(state.currentTurnTokenId)),
     );
   }
 
@@ -124,6 +141,7 @@ export class EssencePowersApp {
                 this.state.gmTab,
                 this.state.selectedGmId,
                 this.state.draftCharacter,
+                this.state.activeConfluenceOpen,
               )
             : ""
         }
@@ -166,6 +184,7 @@ export class EssencePowersApp {
       else if (action.startsWith("use-confluence:")) await this.useConfluencePower(action.split(":")[1], button.dataset.powerId);
       else if (action === "resource") await this.adjustResource(button);
       else if (action === "long-rest") await this.longRest();
+      else if (action === "active-confluence") this.toggleActiveConfluence();
       else if (action === "delete-character") await this.deleteCharacter(button.dataset.id);
       else if (action === "reset-character") await this.resetCharacter(button.dataset.id);
       else if (action === "delete-essence") await this.deleteEssence(button.dataset.id);
@@ -214,6 +233,7 @@ export class EssencePowersApp {
             ...character.confluenceUses,
             current: spendResource(character.confluenceUses.current, character.confluenceUses.max, power.cost),
           },
+          confluenceRoundsRemaining: 10,
         };
       }),
     );
@@ -227,14 +247,34 @@ export class EssencePowersApp {
       throw new Error("Players can only use one resource at a time.");
     }
     await updateData((data) =>
-      updateCharacterResource(data, this.state.actor, this.currentCharacterId(), (character) => ({
-        ...character,
-        [resource]: {
-          ...character[resource],
-          current: adjustResource(character[resource].current, character[resource].max, delta),
-        },
-      })),
+      updateCharacterResource(data, this.state.actor, this.currentCharacterId(), (character) => {
+        const updated = {
+          ...character,
+          [resource]: {
+            ...character[resource],
+            current: adjustResource(character[resource].current, character[resource].max, delta),
+          },
+        };
+        return resource === "confluenceUses" && delta < 0 ? activateConfluence(updated) : updated;
+      }),
     );
+  }
+
+  private toggleActiveConfluence(): void {
+    this.state.activeConfluenceOpen = !this.state.activeConfluenceOpen;
+    this.render();
+  }
+
+  private async handleForgeTurnChange(currentTurnTokenId: string | null): Promise<void> {
+    const previousTurnTokenId = this.state.lastForgeTurnTokenId;
+    if (previousTurnTokenId === currentTurnTokenId) return;
+    this.state.lastForgeTurnTokenId = currentTurnTokenId;
+    if (!previousTurnTokenId || this.state.actor.role !== "GM") return;
+    await updateData((data) => {
+      const character = Object.values(data.characters).find((item) => item.tokenId === previousTurnTokenId);
+      if (!character || character.confluenceRoundsRemaining <= 0) return data;
+      return updateCharacterResource(data, this.state.actor, character.id, (item) => tickConfluenceRound(item));
+    });
   }
 
   private async longRest(): Promise<void> {
@@ -261,6 +301,7 @@ export class EssencePowersApp {
       confluenceId: textValue(data, "confluenceId") || null,
       essencePoints: { max: epMax, current: Math.min(numberValue(data, "epCurrent"), epMax) },
       confluenceUses: { max: cuMax, current: Math.min(numberValue(data, "cuCurrent"), cuMax) },
+      confluenceRoundsRemaining: Math.max(0, Number(this.state.data.characters[textValue(data, "id")]?.confluenceRoundsRemaining ?? 0)),
       visibleToPlayers: data.get("visibleToPlayers") === "on",
     };
   }

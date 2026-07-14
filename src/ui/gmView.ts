@@ -119,14 +119,37 @@ export function gmView(
   tab: string,
   selectedId: string | null,
   draftCharacter: Character = createBlankCharacter(),
+  activeConfluenceOpen = false,
 ): string {
   const active = tab || "characters";
   const character = selectedId ? data.characters[selectedId] : draftCharacter;
   const essence = selectedId ? data.essences[selectedId] : undefined;
   const confluence = selectedId ? data.confluences[selectedId] : undefined;
+  const activeConfluences = Object.values(data.characters)
+    .filter((item) => item.confluenceRoundsRemaining > 0)
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return `
     <section class="gm-panel">
+      <div class="gm-tools">
+        <button class="secondary" type="button" data-action="active-confluence">Active confluence</button>
+        ${
+          activeConfluenceOpen
+            ? `<div class="active-confluence-list">
+                ${
+                  activeConfluences.length
+                    ? activeConfluences
+                        .map(
+                          (item) =>
+                            `<div><span>${escapeHtml(item.name)}</span><strong>${item.confluenceRoundsRemaining}</strong></div>`,
+                        )
+                        .join("")
+                    : `<p class="empty">No active confluences.</p>`
+                }
+              </div>`
+            : ""
+        }
+      </div>
       <nav class="tabs" aria-label="GM management sections">
         ${["characters", "essences", "confluences"]
           .map(

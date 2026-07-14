@@ -5,7 +5,7 @@ import { validateCharacter } from "../data/validation";
 import { canPlayerEditResources, canViewCharacter } from "../sdk/permissions";
 import { deleteConfluence } from "./confluenceService";
 import { deleteEssence } from "./essenceService";
-import { adjustResource, longRest, spendResource } from "./resourceService";
+import { activateConfluence, adjustResource, longRest, spendResource, tickConfluenceRound } from "./resourceService";
 
 const gm = { role: "GM" as const, playerId: "gm" };
 const player = { role: "PLAYER" as const, playerId: "player-1" };
@@ -32,6 +32,7 @@ function dataFixture(): EssenceData {
         confluenceId: "forge",
         essencePoints: { current: 2, max: 6 },
         confluenceUses: { current: 0, max: 2 },
+        confluenceRoundsRemaining: 0,
         visibleToPlayers: true,
       },
     },
@@ -59,6 +60,17 @@ describe("resource logic", () => {
     const rested = longRest(dataFixture().characters.hero);
     expect(rested.essencePoints.current).toBe(6);
     expect(rested.confluenceUses.current).toBe(2);
+  });
+
+  it("starts confluence rounds at 10", () => {
+    const active = activateConfluence(dataFixture().characters.hero);
+    expect(active.confluenceRoundsRemaining).toBe(10);
+  });
+
+  it("ticks confluence rounds down to zero", () => {
+    const ticked = tickConfluenceRound({ ...dataFixture().characters.hero, confluenceRoundsRemaining: 1 });
+    expect(ticked.confluenceRoundsRemaining).toBe(0);
+    expect(tickConfluenceRound(ticked).confluenceRoundsRemaining).toBe(0);
   });
 });
 

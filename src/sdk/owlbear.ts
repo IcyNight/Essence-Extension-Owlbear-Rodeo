@@ -8,6 +8,8 @@ export type SceneTokenInfo = {
 };
 
 const FORGE_UNIT_NAME_KEY = "com.battle-system.forge/name";
+const FORGE_CURRENT_TURN_KEY = "com.battle-system.forge/currturn";
+const FORGE_CURRENT_ROUND_KEY = "com.battle-system.forge/currround";
 
 export async function waitForOwlbear(): Promise<boolean> {
   if (typeof window === "undefined") return false;
@@ -83,6 +85,36 @@ export function onSelectionChange(callback: (selection: string[] | undefined) =>
 
 export function onPartyChange(callback: () => void): () => void {
   return OBR.party.onChange(callback);
+}
+
+export type ForgeTurnState = {
+  currentTurnTokenId: string | null;
+  currentRound: number;
+};
+
+function forgeTurnStateFromMetadata(metadata: Record<string, unknown>): ForgeTurnState {
+  const currentTurn = metadata[FORGE_CURRENT_TURN_KEY];
+  const currentRound = Number(metadata[FORGE_CURRENT_ROUND_KEY] ?? 1);
+  return {
+    currentTurnTokenId: typeof currentTurn === "string" && currentTurn ? currentTurn : null,
+    currentRound: Number.isFinite(currentRound) ? currentRound : 1,
+  };
+}
+
+export async function getForgeTurnState(): Promise<ForgeTurnState> {
+  try {
+    const ready = await OBR.scene.isReady();
+    if (!ready) return { currentTurnTokenId: null, currentRound: 1 };
+    return forgeTurnStateFromMetadata(await OBR.scene.getMetadata());
+  } catch {
+    return { currentTurnTokenId: null, currentRound: 1 };
+  }
+}
+
+export function onForgeTurnChange(callback: (state: ForgeTurnState) => void): () => void {
+  return OBR.scene.onMetadataChange((metadata) => {
+    callback(forgeTurnStateFromMetadata(metadata));
+  });
 }
 
 export { OBR };
