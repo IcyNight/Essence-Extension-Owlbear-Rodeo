@@ -145,6 +145,14 @@ export async function getSelectedConfluenceAreaShape(fallbackId?: string | null)
   return item?.id ?? null;
 }
 
+export async function deleteConfluenceAreaShapes(itemIds: string[]): Promise<void> {
+  const ids = [...new Set(itemIds.filter(Boolean))];
+  if (ids.length === 0) return;
+  const ready = await OBR.scene.isReady();
+  if (!ready) return;
+  await OBR.scene.items.deleteItems(ids);
+}
+
 function pointInShapeArea(point: { x: number; y: number }, area: ShapeArea): boolean {
   const dx = Math.abs(point.x - area.center.x);
   const dy = Math.abs(point.y - area.center.y);

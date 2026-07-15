@@ -10,6 +10,7 @@ import {
   adjustResource,
   applyForgeRoundConfluenceTick,
   applyForgeTurnConfluenceTick,
+  getExpiringConfluenceAreaItemIds,
   longRest,
   spendResource,
   tickConfluenceRound,
@@ -79,8 +80,15 @@ describe("resource logic", () => {
   });
 
   it("ticks confluence rounds down to zero", () => {
-    const ticked = tickConfluenceRound({ ...dataFixture().characters.hero, confluenceRoundsRemaining: 1 });
+    const ticked = tickConfluenceRound({
+      ...dataFixture().characters.hero,
+      confluenceRoundsRemaining: 1,
+      confluenceAreaItemId: "shape-1",
+      confluenceAreaSaved: true,
+    });
     expect(ticked.confluenceRoundsRemaining).toBe(0);
+    expect(ticked.confluenceAreaItemId).toBeNull();
+    expect(ticked.confluenceAreaSaved).toBe(false);
     expect(tickConfluenceRound(ticked).confluenceRoundsRemaining).toBe(0);
   });
 
@@ -129,6 +137,24 @@ describe("resource logic", () => {
     expect(first.characters.hero.confluenceRoundsRemaining).toBe(9);
     expect(duplicate.characters.hero.confluenceRoundsRemaining).toBe(9);
     expect(nextRound.characters.hero.confluenceRoundsRemaining).toBe(8);
+  });
+
+  it("finds saved confluence shapes that expire on a Forge round tick", () => {
+    const data = dataFixture();
+    const active = {
+      ...data,
+      characters: {
+        ...data.characters,
+        hero: {
+          ...data.characters.hero,
+          confluenceRoundsRemaining: 1,
+          confluenceAreaItemId: "shape-1",
+          confluenceAreaSaved: true,
+        },
+      },
+    };
+    expect(getExpiringConfluenceAreaItemIds(active, 1)).toEqual(["shape-1"]);
+    expect(applyForgeRoundConfluenceTick(active, gm, 2).characters.hero.confluenceAreaItemId).toBeNull();
   });
 });
 

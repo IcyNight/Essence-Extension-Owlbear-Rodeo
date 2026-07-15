@@ -8,6 +8,7 @@ import {
   getSelectedTokenId,
   getForgeTurnState,
   createConfluenceAreaNotifications,
+  deleteConfluenceAreaShapes,
   getSelectedConfluenceAreaShape,
   onPartyChange,
   onForgeTurnChange,
@@ -27,6 +28,7 @@ import {
   applyForgeRoundConfluenceTick,
   activateConfluence,
   adjustResource,
+  getExpiringConfluenceAreaItemIds,
   longRest,
   spendResource,
   updateCharacterResource,
@@ -308,7 +310,12 @@ export class EssencePowersApp {
     if (encounterReset) return;
     const roundTickAmount = currentRound > previousRound ? currentRound - previousRound : 0;
     const eventKey = `${this.state.forgeEncounterSequence}:${previousTurnTokenId}->${currentTurnTokenId ?? "none"}@${currentRound}`;
+    const roundEventKey = `${this.state.forgeEncounterSequence}:round:${currentRound}`;
+    let expiredAreaItemIds: string[] = [];
     await updateData(async (data) => {
+      if (roundTickAmount > 0 && data.lastProcessedForgeRoundEvent !== roundEventKey) {
+        expiredAreaItemIds = getExpiringConfluenceAreaItemIds(data, roundTickAmount);
+      }
       let next =
         roundTickAmount > 0
           ? applyForgeRoundConfluenceTick(
@@ -335,6 +342,9 @@ export class EssencePowersApp {
         ].slice(-30),
       };
     });
+    if (expiredAreaItemIds.length > 0) {
+      await deleteConfluenceAreaShapes(expiredAreaItemIds);
+    }
   }
 
   private pollForgeTurnState(): () => void {

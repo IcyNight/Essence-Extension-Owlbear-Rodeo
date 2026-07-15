@@ -43,22 +43,32 @@ export function activateConfluence(character: Character, rounds = 10): Character
 }
 
 export function tickConfluenceRound(character: Character): Character {
-  const remaining = Math.max(0, Math.floor(character.confluenceRoundsRemaining ?? 0));
-  if (remaining <= 0) return character;
-  return {
-    ...character,
-    confluenceRoundsRemaining: remaining - 1,
-  };
+  return tickConfluenceRounds(character, 1);
 }
 
 export function tickConfluenceRounds(character: Character, amount: number): Character {
   const remaining = Math.max(0, Math.floor(character.confluenceRoundsRemaining ?? 0));
   const safeAmount = Math.max(0, Math.floor(amount));
   if (remaining <= 0 || safeAmount <= 0) return character;
+  const nextRemaining = Math.max(0, remaining - safeAmount);
   return {
     ...character,
-    confluenceRoundsRemaining: Math.max(0, remaining - safeAmount),
+    confluenceRoundsRemaining: nextRemaining,
+    confluenceAreaItemId: nextRemaining === 0 ? null : character.confluenceAreaItemId,
+    confluenceAreaSaved: nextRemaining === 0 ? false : character.confluenceAreaSaved,
   };
+}
+
+export function getExpiringConfluenceAreaItemIds(data: EssenceData, amount: number): string[] {
+  const safeAmount = Math.max(0, Math.floor(amount));
+  if (safeAmount <= 0) return [];
+  const ids = Object.values(data.characters).flatMap((character) => {
+    const remaining = Math.max(0, Math.floor(character.confluenceRoundsRemaining ?? 0));
+    if (remaining <= 0 || remaining - safeAmount > 0) return [];
+    if (!character.confluenceAreaSaved || !character.confluenceAreaItemId) return [];
+    return [character.confluenceAreaItemId];
+  });
+  return [...new Set(ids)];
 }
 
 export function applyForgeRoundConfluenceTick(
