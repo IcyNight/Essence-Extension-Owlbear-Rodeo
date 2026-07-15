@@ -180,6 +180,20 @@ describe("migration and deletion warnings", () => {
     expect(migrated.essences.bad.powers).toEqual([]);
   });
 
+  it("preserves confluence names in notifications", () => {
+    const migrated = migrateData({
+      confluenceNotifications: [
+        {
+          id: "event-1",
+          ownerPlayerId: "player-1",
+          tokenNames: ["Bandit"],
+          confluenceNames: ["Hero: Forge", "Mage: Storm"],
+        },
+      ],
+    });
+    expect(migrated.confluenceNotifications[0].confluenceNames).toEqual(["Hero: Forge", "Mage: Storm"]);
+  });
+
   it("warns before deleting an assigned essence", () => {
     expect(() => deleteEssence(dataFixture(), gm, "fire")).toThrow("Essence is assigned");
   });

@@ -51,6 +51,7 @@ export type ConfluenceNotification = {
   id: string;
   ownerPlayerId: string;
   tokenNames: string[];
+  confluenceNames: string[];
 };
 
 export type EssenceData = {

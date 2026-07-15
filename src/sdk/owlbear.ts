@@ -202,6 +202,11 @@ function notificationOwnerForToken(token: SceneTokenInfo, data: EssenceData, gmP
   return character?.ownerPlayerId || token.ownerPlayerId || gmPlayerId;
 }
 
+function confluenceAreaName(area: ShapeArea, data: EssenceData): string {
+  const confluence = area.character.confluenceId ? data.confluences[area.character.confluenceId] : undefined;
+  return confluence?.name ? `${area.character.name}: ${confluence.name}` : `${area.character.name}'s Confluence`;
+}
+
 export async function createConfluenceAreaNotifications(
   data: EssenceData,
   previousTurnTokenId: string,
@@ -215,24 +220,31 @@ export async function createConfluenceAreaNotifications(
   const areas = await getSavedShapeAreas(Object.values(data.characters));
   if (areas.length === 0) return [];
   const tokenCenter = await itemCenter(tokenItem);
-  if (!areas.some((area) => pointInShapeArea(tokenCenter, area))) return [];
+  const matchingAreas = areas.filter((area) => pointInShapeArea(tokenCenter, area));
+  if (matchingAreas.length === 0) return [];
 
   const token = await getSceneTokenInfo(previousTurnTokenId);
   const ownerPlayerId = notificationOwnerForToken(token, data, gmPlayerId);
   if (!ownerPlayerId) return [];
   const name = token.name || tokenItem.name || "Token";
+  const confluenceNames = [...new Set(matchingAreas.map((area) => confluenceAreaName(area, data)))];
   return [
     {
       id: `${eventKey}:${ownerPlayerId}`,
       ownerPlayerId,
       tokenNames: [name],
+      confluenceNames,
     },
   ];
 }
 
-export async function showConfluenceReminder(tokenNames: string[]): Promise<void> {
+export async function showConfluenceReminder(tokenNames: string[], confluenceNames: string[] = []): Promise<void> {
   const names = [...new Set(tokenNames)].join(", ");
-  await OBR.notification.show(`Remember Confluence effect in the area: ${names}.`, "WARNING");
+  const confluences = [...new Set(confluenceNames)].join(", ");
+  const message = confluences
+    ? `Remember Confluence effect for ${names} in: ${confluences}.`
+    : `Remember Confluence effect in the area: ${names}.`;
+  await OBR.notification.show(message, "WARNING");
 }
 
 export { OBR };

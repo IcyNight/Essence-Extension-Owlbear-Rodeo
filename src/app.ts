@@ -367,7 +367,8 @@ export class EssencePowersApp {
     pending.forEach((event) => seen.add(event.id));
     this.saveSeenConfluenceNotificationIds(seen);
     const tokenNames = pending.flatMap((event) => event.tokenNames);
-    showConfluenceReminder(tokenNames);
+    const confluenceNames = pending.flatMap((event) => event.confluenceNames);
+    showConfluenceReminder(tokenNames, confluenceNames);
   }
 
   private async selectConfluenceArea(): Promise<void> {

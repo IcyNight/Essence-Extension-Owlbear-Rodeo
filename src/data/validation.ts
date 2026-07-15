@@ -128,13 +128,23 @@ export function normalizeData(raw: Partial<EssenceData>): EssenceData {
     confluenceNotifications: Array.isArray(raw.confluenceNotifications)
       ? raw.confluenceNotifications
           .flatMap((event) => {
-            const candidate = event as { id?: unknown; ownerPlayerId?: unknown; tokenNames?: unknown };
+            const candidate = event as {
+              id?: unknown;
+              ownerPlayerId?: unknown;
+              tokenNames?: unknown;
+              confluenceNames?: unknown;
+            };
             const id = normalizeName(candidate.id);
             const ownerPlayerId = normalizeName(candidate.ownerPlayerId);
             const tokenNames = Array.isArray(candidate.tokenNames)
               ? candidate.tokenNames.map((name) => normalizeName(name)).filter(Boolean)
               : [];
-            return id && ownerPlayerId && tokenNames.length > 0 ? [{ id, ownerPlayerId, tokenNames }] : [];
+            const confluenceNames = Array.isArray(candidate.confluenceNames)
+              ? candidate.confluenceNames.map((name) => normalizeName(name)).filter(Boolean)
+              : [];
+            return id && ownerPlayerId && tokenNames.length > 0
+              ? [{ id, ownerPlayerId, tokenNames, confluenceNames }]
+              : [];
           })
           .slice(-30)
       : [],
