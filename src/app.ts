@@ -8,6 +8,7 @@ import {
   getSelectedTokenId,
   getForgeTurnState,
   createConfluenceAreaNotifications,
+  closeTokenSheetPopover,
   deleteConfluenceAreaShapes,
   getSelectedConfluenceAreaShape,
   markTokenCharacterLink,
@@ -63,7 +64,7 @@ type AppState = {
 };
 
 const SEEN_CONFLUENCE_NOTIFICATIONS_KEY = "essence-powers.seen-confluence-notifications";
-const CURRENT_EXTENSION_VERSION = "0.1.41";
+const CURRENT_EXTENSION_VERSION = "0.1.42";
 const LIVE_MANIFEST_URL = "https://icynight.github.io/Essence-Extension-Owlbear-Rodeo/manifest.json";
 const EXTENSION_HOSTS = new Set(["icynight.github.io", "localhost", "127.0.0.1"]);
 
@@ -220,7 +221,10 @@ export class EssencePowersApp {
             <p>${this.state.mode === "token" ? "Token Sheet" : isGm ? "GM Console" : this.state.playerName}</p>
             <h1>Essence Powers</h1>
           </div>
-          <span class="role">${this.state.actor.role}</span>
+          <div class="header-actions">
+            <span class="role">${this.state.actor.role}</span>
+            ${this.state.mode === "token" ? `<button class="secondary small" type="button" data-action="close-token-sheet">Exit</button>` : ""}
+          </div>
         </header>
         ${this.state.error ? `<div class="toast error" role="alert">${this.state.error}</div>` : ""}
         ${this.state.message ? `<div class="toast" role="status">${this.state.message}</div>` : ""}
@@ -303,6 +307,7 @@ export class EssencePowersApp {
       else if (action === "load-sample") await this.loadSampleData();
       else if (action === "clear-data") await this.clearData();
       else if (action === "check-update") await this.checkForUpdate();
+      else if (action === "close-token-sheet") await closeTokenSheetPopover();
       else if (action === "selected-token") await this.useSelectedToken(button.dataset.target);
       else if (action === "add-power" || action === "remove-power" || action === "move-power") this.editPowerList(button);
     } catch (error) {

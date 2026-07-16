@@ -105,6 +105,12 @@ p {
   font-size: 1.55rem;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .role,
 .cost {
   border: 1px solid #8d6739;
