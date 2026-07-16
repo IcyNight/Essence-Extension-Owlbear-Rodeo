@@ -6,6 +6,11 @@
   font-size: 16px;
 }
 
+html {
+  min-height: 100%;
+  overflow-y: auto;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -13,7 +18,14 @@
 body {
   margin: 0;
   min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: radial-gradient(circle at top left, rgba(185, 65, 47, 0.22), transparent 34%), #120f0d;
+}
+
+#app {
+  min-height: 100vh;
 }
 
 button,
