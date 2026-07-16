@@ -1,6 +1,14 @@
 import "./styles/main.css";
 import { createApp } from "./app";
-import { getCurrentPlayer, waitForOwlbear } from "./sdk/owlbear";
+import {
+  closeTokenSheetPopover,
+  getCurrentPlayer,
+  openTokenSheetPopover,
+  OBR,
+  registerEssenceTokenContextMenu,
+  waitForOwlbear,
+} from "./sdk/owlbear";
+import { readData } from "./sdk/storage";
 
 const root = document.querySelector<HTMLDivElement>("#app");
 
@@ -21,7 +29,26 @@ async function boot() {
 
   const player = await getCurrentPlayer();
   const actor = { role: player.role, playerId: player.id, name: player.name };
-  const app = await createApp(root, actor);
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get("mode") === "token" ? "token" : "console";
+  const tokenId = params.get("tokenId");
+
+  if (actor.role === "GM") {
+    await registerEssenceTokenContextMenu(async (clickedTokenId) => {
+      const data = await readData();
+      const linkedCharacter = Object.values(data.characters).find((character) => character.tokenId === clickedTokenId);
+      if (!linkedCharacter) {
+        await OBR.notification.show("No Essence character is linked to this token.", "WARNING");
+        return;
+      }
+      await openTokenSheetPopover(clickedTokenId);
+    });
+    if (mode === "console") {
+      await closeTokenSheetPopover();
+    }
+  }
+
+  const app = await createApp(root, actor, mode, tokenId);
   app.mount();
 }
 

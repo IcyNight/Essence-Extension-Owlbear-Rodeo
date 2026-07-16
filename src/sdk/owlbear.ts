@@ -1,5 +1,5 @@
 import OBR, { isShape, Item, Shape } from "@owlbear-rodeo/sdk";
-import { Character, ConfluenceNotification, EssenceData, PlayerInfo, PlayerRole } from "../data/schema";
+import { Character, ConfluenceNotification, EssenceData, EXTENSION_ID, PlayerInfo, PlayerRole } from "../data/schema";
 
 export type SceneTokenInfo = {
   id: string;
@@ -10,6 +10,9 @@ export type SceneTokenInfo = {
 const FORGE_UNIT_NAME_KEY = "com.battle-system.forge/name";
 const FORGE_CURRENT_TURN_KEY = "com.battle-system.forge/currturn";
 const FORGE_CURRENT_ROUND_KEY = "com.battle-system.forge/currround";
+const TOKEN_CHARACTER_ID_KEY = `${EXTENSION_ID}/characterId`;
+const TOKEN_CONTEXT_MENU_ID = `${EXTENSION_ID}/token-essences`;
+const TOKEN_SHEET_POPOVER_ID = `${EXTENSION_ID}/token-sheet`;
 
 type ShapeArea = {
   character: Character;
@@ -122,6 +125,74 @@ export async function getForgeTurnState(): Promise<ForgeTurnState> {
 export function onForgeTurnChange(callback: (state: ForgeTurnState) => void): () => void {
   return OBR.scene.onMetadataChange((metadata) => {
     callback(forgeTurnStateFromMetadata(metadata));
+  });
+}
+
+function appUrlForMode(mode: "console" | "token", tokenId?: string): string {
+  const url = new URL(window.location.href);
+  url.searchParams.set("mode", mode);
+  if (tokenId) {
+    url.searchParams.set("tokenId", tokenId);
+  } else {
+    url.searchParams.delete("tokenId");
+  }
+  return url.toString();
+}
+
+function assetUrl(path: string): string {
+  return new URL(path, window.location.href).toString();
+}
+
+export async function markTokenCharacterLink(tokenId: string | null | undefined, characterId: string): Promise<void> {
+  if (!tokenId) return;
+  try {
+    const ready = await OBR.scene.isReady();
+    if (!ready) return;
+    const [item] = await OBR.scene.items.getItems([tokenId]);
+    if (!item) return;
+    await OBR.scene.items.updateItems([item], (drafts) => {
+      drafts[0].metadata[TOKEN_CHARACTER_ID_KEY] = characterId;
+    });
+  } catch {
+    // The character link is still saved even if the token marker cannot be written.
+  }
+}
+
+export async function openTokenSheetPopover(tokenId: string): Promise<void> {
+  await OBR.action.close();
+  await OBR.popover.close(TOKEN_SHEET_POPOVER_ID).catch(() => undefined);
+  await OBR.popover.open({
+    id: TOKEN_SHEET_POPOVER_ID,
+    url: appUrlForMode("token", tokenId),
+    width: 420,
+    height: 720,
+    disableClickAway: true,
+  });
+}
+
+export async function closeTokenSheetPopover(): Promise<void> {
+  await OBR.popover.close(TOKEN_SHEET_POPOVER_ID).catch(() => undefined);
+}
+
+export async function registerEssenceTokenContextMenu(onOpenToken: (tokenId: string) => void | Promise<void>): Promise<void> {
+  await OBR.contextMenu.create({
+    id: TOKEN_CONTEXT_MENU_ID,
+    icons: [
+      {
+        icon: assetUrl("action-e.svg"),
+        label: "Essences",
+        filter: {
+          min: 1,
+          max: 1,
+          roles: ["GM"],
+          every: [{ key: "layer", value: "CHARACTER" }],
+        },
+      },
+    ],
+    onClick: (context) => {
+      const tokenId = context.items[0]?.id;
+      if (tokenId) void onOpenToken(tokenId);
+    },
   });
 }
 

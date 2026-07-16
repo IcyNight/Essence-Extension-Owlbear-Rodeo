@@ -49,41 +49,16 @@ function confluenceSlot(data: EssenceData, character: Character): string {
   );
 }
 
-export function playerView(data: EssenceData, actor: Actor, selectedCharacterId: string | null): string {
-  const characters = getVisibleCharacters(actor, data);
-  if (characters.length === 0) {
-    return `
-      <section class="panel-section">
-        <h2>Essence Powers</h2>
-        <p class="empty">No visible character is assigned to you yet.</p>
-      </section>
-    `;
-  }
-
-  const character = characters.find((item) => item.id === selectedCharacterId) ?? characters[0];
-  const canRestoreResources = actor.role === "GM";
-  const selector =
-    characters.length > 1
-      ? `
-        <label>
-          Character
-          <select id="character-picker">
-            ${characters
-              .map(
-                (item) =>
-                  `<option value="${escapeHtml(item.id)}" ${item.id === character.id ? "selected" : ""}>${escapeHtml(
-                    item.name,
-                  )}</option>`,
-              )
-              .join("")}
-          </select>
-        </label>
-      `
-      : "";
-
+function characterPanel(
+  data: EssenceData,
+  actor: Actor,
+  character: Character,
+  selectorHtml = "",
+  canRestoreResources = actor.role === "GM",
+): string {
   return `
     <section class="player-panel" data-character-id="${escapeHtml(character.id)}">
-      ${selector}
+      ${selectorHtml}
       <h2>${escapeHtml(character.name)}</h2>
       <h3 class="player-section-title">Essences</h3>
       <div class="slots">
@@ -110,4 +85,42 @@ export function playerView(data: EssenceData, actor: Actor, selectedCharacterId:
       </footer>
     </section>
   `;
+}
+
+export function singleCharacterPlayerView(data: EssenceData, actor: Actor, character: Character): string {
+  return characterPanel(data, actor, character, "", false);
+}
+
+export function playerView(data: EssenceData, actor: Actor, selectedCharacterId: string | null): string {
+  const characters = getVisibleCharacters(actor, data);
+  if (characters.length === 0) {
+    return `
+      <section class="panel-section">
+        <h2>Essence Powers</h2>
+        <p class="empty">No visible character is assigned to you yet.</p>
+      </section>
+    `;
+  }
+
+  const character = characters.find((item) => item.id === selectedCharacterId) ?? characters[0];
+  const selector =
+    characters.length > 1
+      ? `
+        <label>
+          Character
+          <select id="character-picker">
+            ${characters
+              .map(
+                (item) =>
+                  `<option value="${escapeHtml(item.id)}" ${item.id === character.id ? "selected" : ""}>${escapeHtml(
+                    item.name,
+                  )}</option>`,
+              )
+              .join("")}
+          </select>
+        </label>
+      `
+      : "";
+
+  return characterPanel(data, actor, character, selector);
 }

@@ -10,6 +10,7 @@ import {
   createConfluenceAreaNotifications,
   deleteConfluenceAreaShapes,
   getSelectedConfluenceAreaShape,
+  markTokenCharacterLink,
   onPartyChange,
   onForgeTurnChange,
   onPlayerChange,
@@ -19,7 +20,7 @@ import {
   showConfluenceReminder,
 } from "./sdk/owlbear";
 import { onDataChange, readData, updateData, writeData } from "./sdk/storage";
-import { playerView } from "./ui/playerView";
+import { playerView, singleCharacterPlayerView } from "./ui/playerView";
 import { gmView } from "./ui/gmView";
 import { createBlankCharacter, saveCharacter, deleteCharacter, resetCharacterResources } from "./services/characterService";
 import { saveEssence, deleteEssence, createBlankEssence, createBlankPower } from "./services/essenceService";
@@ -57,10 +58,12 @@ type AppState = {
   forgeEncounterSequence: number;
   message: string;
   error: string;
+  mode: "console" | "token";
+  tokenSheetTokenId: string | null;
 };
 
 const SEEN_CONFLUENCE_NOTIFICATIONS_KEY = "essence-powers.seen-confluence-notifications";
-const CURRENT_EXTENSION_VERSION = "0.1.40";
+const CURRENT_EXTENSION_VERSION = "0.1.41";
 const LIVE_MANIFEST_URL = "https://icynight.github.io/Essence-Extension-Owlbear-Rodeo/manifest.json";
 const EXTENSION_HOSTS = new Set(["icynight.github.io", "localhost", "127.0.0.1"]);
 
@@ -107,6 +110,8 @@ export class EssencePowersApp {
     actor: Actor & { name: string },
     data: EssenceData,
     players: PlayerInfo[],
+    mode: "console" | "token" = "console",
+    tokenSheetTokenId: string | null = null,
   ) {
     this.state = {
       data,
@@ -126,6 +131,8 @@ export class EssencePowersApp {
       forgeEncounterSequence: 0,
       message: "",
       error: "",
+      mode,
+      tokenSheetTokenId,
     };
   }
 
@@ -197,6 +204,10 @@ export class EssencePowersApp {
 
   private render(): void {
     const isGm = this.state.actor.role === "GM";
+    const tokenSheetCharacter =
+      this.state.mode === "token" && this.state.tokenSheetTokenId
+        ? Object.values(this.state.data.characters).find((character) => character.tokenId === this.state.tokenSheetTokenId)
+        : undefined;
     const visible = isGm ? [] : getVisibleCharacters(this.state.actor, this.state.data);
     if (!isGm && !this.state.selectedCharacterId && visible[0]) {
       this.state.selectedCharacterId = visible[0].id;
@@ -206,16 +217,24 @@ export class EssencePowersApp {
       <main class="app-shell">
         <header class="app-header">
           <div>
-            <p>${isGm ? "GM Console" : this.state.playerName}</p>
+            <p>${this.state.mode === "token" ? "Token Sheet" : isGm ? "GM Console" : this.state.playerName}</p>
             <h1>Essence Powers</h1>
           </div>
           <span class="role">${this.state.actor.role}</span>
         </header>
         ${this.state.error ? `<div class="toast error" role="alert">${this.state.error}</div>` : ""}
         ${this.state.message ? `<div class="toast" role="status">${this.state.message}</div>` : ""}
-        ${isGm ? "" : playerView(this.state.data, this.state.actor, this.state.selectedCharacterId)}
         ${
-          isGm
+          this.state.mode === "token"
+            ? tokenSheetCharacter
+              ? singleCharacterPlayerView(this.state.data, this.state.actor, tokenSheetCharacter)
+              : `<section class="panel-section"><h2>Essence Powers</h2><p class="empty">No linked character was found for this token.</p></section>`
+            : isGm
+              ? ""
+              : playerView(this.state.data, this.state.actor, this.state.selectedCharacterId)
+        }
+        ${
+          isGm && this.state.mode === "console"
             ? gmView(
                 this.state.data,
                 this.state.players,
@@ -516,6 +535,7 @@ export class EssencePowersApp {
   private async saveCharacterForm(form: HTMLFormElement): Promise<void> {
     const character = this.characterFromForm(form);
     await updateData((data) => saveCharacter(data, this.state.actor, character, this.state.players.map((player) => player.id)));
+    await markTokenCharacterLink(character.tokenId, character.id);
     this.state.selectedGmId = character.id;
     this.state.draftCharacter = createBlankCharacter();
     this.setMessage("Character saved.");
@@ -698,6 +718,7 @@ export class EssencePowersApp {
           this.state.players.map((player) => player.id),
         );
       });
+      await markTokenCharacterLink(token.id, characterId);
       this.state.selectedGmId = characterId;
       this.state.draftCharacter = createBlankCharacter();
       this.setMessage(
@@ -710,6 +731,7 @@ export class EssencePowersApp {
 
     const character = this.characterFromForm(form);
     await updateData((data) => saveCharacter(data, this.state.actor, character, this.state.players.map((player) => player.id)));
+    await markTokenCharacterLink(character.tokenId, character.id);
     this.state.selectedGmId = character.id;
     this.state.draftCharacter = createBlankCharacter();
     const ownerMessage = ownerPlayerId ? " Owner and visibility filled from token." : "";
@@ -760,7 +782,12 @@ export class EssencePowersApp {
   }
 }
 
-export async function createApp(root: HTMLElement, actor: Actor & { name: string }): Promise<EssencePowersApp> {
+export async function createApp(
+  root: HTMLElement,
+  actor: Actor & { name: string },
+  mode: "console" | "token" = "console",
+  tokenSheetTokenId: string | null = null,
+): Promise<EssencePowersApp> {
   const [data, players] = await Promise.all([readData(), getPlayers()]);
-  return new EssencePowersApp(root, actor, data, players);
+  return new EssencePowersApp(root, actor, data, players, mode, tokenSheetTokenId);
 }
