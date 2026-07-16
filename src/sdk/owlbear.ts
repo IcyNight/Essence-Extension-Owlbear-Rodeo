@@ -13,6 +13,8 @@ const FORGE_CURRENT_ROUND_KEY = "com.battle-system.forge/currround";
 const TOKEN_CHARACTER_ID_KEY = `${EXTENSION_ID}/characterId`;
 const TOKEN_CONTEXT_MENU_ID = `${EXTENSION_ID}/token-essences`;
 const TOKEN_SHEET_POPOVER_ID = `${EXTENSION_ID}/token-sheet`;
+const DEFAULT_WINDOW_HEIGHT = 720;
+const MIN_WINDOW_HEIGHT = 420;
 
 type ShapeArea = {
   character: Character;
@@ -143,6 +145,17 @@ function assetUrl(path: string): string {
   return new URL(path, window.location.href).toString();
 }
 
+function availableWindowHeight(): number {
+  const screenHeight = window.screen?.availHeight || window.screen?.height || DEFAULT_WINDOW_HEIGHT;
+  const viewportHeight = window.visualViewport?.height || window.innerHeight || DEFAULT_WINDOW_HEIGHT;
+  const usableHeight = Math.min(screenHeight, viewportHeight || screenHeight) - 48;
+  return Math.max(MIN_WINDOW_HEIGHT, Math.min(DEFAULT_WINDOW_HEIGHT, Math.floor(usableHeight)));
+}
+
+export async function fitActionToViewport(): Promise<void> {
+  await OBR.action.setHeight(availableWindowHeight()).catch(() => undefined);
+}
+
 export async function markTokenCharacterLink(tokenId: string | null | undefined, characterId: string): Promise<void> {
   if (!tokenId) return;
   try {
@@ -165,7 +178,7 @@ export async function openTokenSheetPopover(tokenId: string): Promise<void> {
     id: TOKEN_SHEET_POPOVER_ID,
     url: appUrlForMode("token", tokenId),
     width: 420,
-    height: 720,
+    height: availableWindowHeight(),
     disableClickAway: true,
   });
 }

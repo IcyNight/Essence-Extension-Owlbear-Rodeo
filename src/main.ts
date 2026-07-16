@@ -2,6 +2,7 @@ import "./styles/main.css";
 import { createApp } from "./app";
 import {
   closeTokenSheetPopover,
+  fitActionToViewport,
   getCurrentPlayer,
   openTokenSheetPopover,
   OBR,
@@ -32,6 +33,10 @@ async function boot() {
   const params = new URLSearchParams(window.location.search);
   const mode = params.get("mode") === "token" ? "token" : "console";
   const tokenId = params.get("tokenId");
+
+  if (mode === "console") {
+    await fitActionToViewport();
+  }
 
   if (actor.role === "GM") {
     await registerEssenceTokenContextMenu(async (clickedTokenId) => {
