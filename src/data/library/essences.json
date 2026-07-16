@@ -7,19 +7,230 @@
         "id": "fire-resistance",
         "name": "Fire Resistance",
         "cost": 1,
-        "description": "Use your reaction to halve incoming fire damage.",
+        "description": "Halve incoming fire damage.",
         "actionCost": "Reaction"
+      }
+    ]
+  },
+  {
+    "id": "noble",
+    "name": "Noble",
+    "powers": [
+      {
+        "id": "noble-charm",
+        "name": "Nobel's Charm",
+        "cost": 1,
+        "description": "Gain advantage on a Charisma Check.",
+        "actionCost": "Bonus Action"
+      }
+    ]
+  },
+  {
+    "id": "glory",
+    "name": "Glory",
+    "powers": [
+      {
+        "id": "glory-kill",
+        "name": "Glory Kill",
+        "cost": 1,
+        "description": "Gain 5 Temporary HP when killing a creature.",
+        "actionCost": "Reaction"
+      }
+    ]
+  },
+  {
+    "id": "resolve",
+    "name": "Resolve",
+    "powers": [
+      {
+        "id": "unwavering-resolve",
+        "name": "Unwavering Resolve",
+        "cost": 1,
+        "description": "Gain advantage on your next saving throw.",
+        "actionCost": "Reaction"
+      }
+    ]
+  },
+  {
+    "id": "life",
+    "name": "Life",
+    "powers": [
+      {
+        "id": "spark-of-life",
+        "name": "Spark Of Life",
+        "cost": 1,
+        "description": "Grant an ally within line of sight Advantage on their next death saving throw.",
+        "actionCost": "Reaction"
+      }
+    ]
+  },
+  {
+    "id": "shield",
+    "name": "Shield",
+    "powers": [
+      {
+        "id": "human-shield",
+        "name": "Human Shield",
+        "cost": 1,
+        "description": "take a hit intended for an ally within 5 feet. If your AC exceeds the attack roll, you negates all damage and on-hit effects. Otherwise, you becomes the target and takes the attack normally..",
+        "actionCost": "Reaction"
+      }
+    ]
+  },
+  {
+    "id": "might",
+    "name": "Might",
+    "powers": [
+      {
+        "id": "mighty",
+        "name": "Mighty",
+        "cost": 1,
+        "description": "Gain Advantage on a Grappling check or an Athletics check",
+        "actionCost": "Reaction"
+      }
+    ]
+  },
+  {
+    "id": "knowledge",
+    "name": "Knowledge",
+    "powers": [
+      {
+        "id": "polyglot",
+        "name": "Polyglot",
+        "cost": 1,
+        "description": "Cast the spell Comprehend Languages without costs",
+        "actionCost": "Action"
+      }
+    ]
+  },
+  {
+    "id": "magic",
+    "name": "Magic",
+    "powers": [
+      {
+        "id": "metamagic",
+        "name": "Metamagic",
+        "cost": 1,
+        "description": "Gain 1 use of Metamagic",
+        "actionCost": "Bonus Action"
+      }
+    ]
+  },
+  {
+    "id": "restoration",
+    "name": "Restoration",
+    "powers": [
+      {
+        "id": "restore-from",
+        "name": "Restore Form",
+        "cost": 1,
+        "description": "Heal an ally for 5 HP or repair a Small or Medium object.",
+        "actionCost": "Bonus Action"
+      }
+    ]
+  },
+  {
+    "id": "doom",
+    "name": "Doom",
+    "powers": [
+      {
+        "id": "doomed-fate",
+        "name": "Doomed Fate",
+        "cost": 1,
+        "description": "Impose Disadvantage on an enemy's next saving throw.",
+        "actionCost": "Reaction"
+      }
+    ]
+  },
+  {
+    "id": "sun",
+    "name": "Sun",
+    "powers": [
+      {
+        "id": "bright=sun",
+        "name": "Bright Sun",
+        "cost": 1,
+        "description": "Illuminate a 10-foot radius, reveal hidden traps and hidden creatures, remove invisibility benefits, and outline traps in golden light. This effect lasts for 1 minute",
+        "actionCost": "Action"
+      }
+    ]
+  },
+  {
+    "id": "apocalypse",
+    "name": "Apocalypse",
+    "powers": [
+      {
+        "id": "intimidating-aura",
+        "name": "Intimidating Aura",
+        "cost": 1,
+        "description": "Project a 15-foot intimidating aura. Creatures in the aura make a Wisdom save or become frightened; creatures that succeed are immune for 24 hours.",
+        "actionCost": "Action"
       }
     ]
   },
   {
     "id": "metal",
     "name": "Metal",
-    "powers": []
+    "powers": [
+      {
+        "id": "metallic-skin",
+        "name": "Metallic Skin",
+        "cost": 1,
+        "description": "Gain +1 AC until the start of your next turn.",
+        "actionCost": "Bonus Action"
+      }
+    ]
   },
   {
     "id": "rune",
     "name": "Rune",
-    "powers": []
+    "powers": [
+      {
+        "id": "ritual-adapt",
+        "name": "Ritual Adapt",
+        "cost": 1,
+        "description": "Cast a known or prepared level 1 ritual spell as a ritual.",
+        "actionCost": "None"
+      }
+    ]
+  },
+  {
+    "id": "blood",
+    "name": "Blood",
+    "powers": [
+      {
+        "id": "bloody-strike",
+        "name": "Bloody Strike",
+        "cost": 1,
+        "description": "On hitting an enemy, use to apply Bleeding. Bleeding deals 1d4 damage at the start of each of the target’s turns. It does not stack; reapplying refreshes it.",
+        "actionCost": "Reaction"
+      }
+    ]
+  },
+  {
+    "id": "trap",
+    "name": "Trap",
+    "powers": [
+      {
+        "id": "reusable-trap",
+        "name": "Reusable Trap",
+        "cost": 1,
+        "description": "Neutralizing a trap allows it to be taken and reused later",
+        "actionCost": "Bonus Action"
+      }
+    ]
+  },
+  {
+    "id": "dark",
+    "name": "Dark",
+    "powers": [
+      {
+        "id": "dark-strike",
+        "name": "Dark Strike",
+        "cost": 1,
+        "description": "On your next successful hit, the target makes a Constitution save or is blinded until the end of its next turn.",
+        "actionCost": "Bonus Action"
+      }
+    ]
   }
 ]
