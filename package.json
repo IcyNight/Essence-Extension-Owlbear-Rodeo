@@ -1,7 +1,7 @@
 {
   "name": "essence-powers",
   "private": true,
-  "version": "0.1.39",
+  "version": "0.1.40",
   "type": "module",
   "description": "Owlbear Rodeo extension for D&D homebrew essence and confluence powers.",
   "scripts": {
