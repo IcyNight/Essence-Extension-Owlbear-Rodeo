@@ -60,6 +60,27 @@ type AppState = {
 };
 
 const SEEN_CONFLUENCE_NOTIFICATIONS_KEY = "essence-powers.seen-confluence-notifications";
+const CURRENT_EXTENSION_VERSION = "0.1.34";
+const LIVE_MANIFEST_URL = "https://icynight.github.io/Essence-Extension-Owlbear-Rodeo/manifest.json";
+
+type ExtensionManifest = {
+  version?: unknown;
+  action?: {
+    popover?: unknown;
+  };
+};
+
+function compareVersions(left: string, right: string): number {
+  const leftParts = left.split(".").map((part) => Number(part));
+  const rightParts = right.split(".").map((part) => Number(part));
+  const length = Math.max(leftParts.length, rightParts.length);
+  for (let index = 0; index < length; index += 1) {
+    const leftValue = Number.isFinite(leftParts[index]) ? leftParts[index] : 0;
+    const rightValue = Number.isFinite(rightParts[index]) ? rightParts[index] : 0;
+    if (leftValue !== rightValue) return leftValue - rightValue;
+  }
+  return 0;
+}
 
 export class EssencePowersApp {
   private state: AppState;
@@ -241,6 +262,7 @@ export class EssencePowersApp {
       else if (action === "delete-confluence") await this.deleteConfluence(button.dataset.id);
       else if (action === "load-sample") await this.loadSampleData();
       else if (action === "clear-data") await this.clearData();
+      else if (action === "check-update") await this.checkForUpdate();
       else if (action === "selected-token") await this.useSelectedToken(button.dataset.target);
       else if (action === "add-power" || action === "remove-power" || action === "move-power") this.editPowerList(button);
     } catch (error) {
@@ -585,6 +607,23 @@ export class EssencePowersApp {
     if (!confirm("Clear all Essence Powers data for this room?")) return;
     await writeData(createEmptyData());
     this.setMessage("Shared data cleared.");
+  }
+
+  private async checkForUpdate(): Promise<void> {
+    const response = await fetch(`${LIVE_MANIFEST_URL}?t=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) throw new Error("Unable to check for updates.");
+    const manifest = (await response.json()) as ExtensionManifest;
+    const latestVersion = typeof manifest.version === "string" ? manifest.version : "";
+    const latestPopover = typeof manifest.action?.popover === "string" ? manifest.action.popover : "";
+    if (!latestVersion || !latestPopover) throw new Error("Live manifest is missing update information.");
+    if (compareVersions(latestVersion, CURRENT_EXTENSION_VERSION) <= 0) {
+      this.setMessage(`Already up to date (${CURRENT_EXTENSION_VERSION}).`);
+      return;
+    }
+    const nextUrl = new URL(latestPopover);
+    nextUrl.searchParams.set("t", String(Date.now()));
+    this.setMessage(`Updating to ${latestVersion}...`);
+    window.location.href = nextUrl.toString();
   }
 
   private async useSelectedToken(characterId?: string): Promise<void> {

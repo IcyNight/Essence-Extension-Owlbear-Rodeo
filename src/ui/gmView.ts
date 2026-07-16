@@ -222,6 +222,7 @@ export function gmView(
           : ""
       }
       <div class="button-row">
+        <button class="secondary" type="button" data-action="check-update">Check for Update</button>
         <button class="danger" type="button" data-action="clear-data">Clear Data</button>
       </div>
     </section>
