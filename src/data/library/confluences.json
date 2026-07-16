@@ -1,5 +1,31 @@
 [
   {
+    "id": "catalyst",
+    "name": "Catalyst",
+    "powers": [
+      {
+        "id": "catalytic-domain",
+        "name": "Catalytic Domain",
+        "cost": 1,
+        "description": "Manipulate ambiant magic in a 15ft radius for 1 minute. Choose one of the following effects: VITAL SURGE- Allies gaint Temporary HP equals to your level x 5 (this effect doesn't stack with existing temp hp and is lost upon leaving the area). ENTROPIC SURGE- Enemies ending their turn in the area must make a Constitution saving throw, Failure= your level Necrotic Damage, Success= Half Damag. SPECIAL PROPERTY: Necrotic Resistance is ignored and Immunity is treated as Resistance. PASSIVE EFFECTS: MAGIAL STABILITY SENSE- You can naturally sense the stability of magic around you, unless it has been intentionally concealed. You instinctively perceive stable magic, unstable magic, magic on the verge of collapse, corrupted structures, and dangerous fluctuations (Does not reveal the cause—only that something is wrong). STABILIZING PRESENCE- Magic has a much harder time going wild or destabilizing around you. Rituals, spells, ambient magic, and magical devices are more stable(**Exception:** If you become involved in an ongoing magical transformation, your presence can alter the process itself).",
+        "actionCost": "Action"
+      }
+    ]
+  },
+  {
+    "id": "nova",
+    "name": "Nova",
+    "powers": [
+      {
+        "id": "nova1",
+        "name": "Shattering Glass",
+        "cost": 1,
+        "description": "Create purple astral cracks around the target.",
+        "actionCost": "Action"
+      }
+    ]
+  },
+  {
     "id": "astral-forge",
     "name": "Astral Forge",
     "powers": [
@@ -11,5 +37,19 @@
         "actionCost": "Action"
       }
     ]
-  }
+  },
+  {
+    "id": "twilight",
+    "name": "Twilight",
+    "powers": [
+      {
+        "id": "twilight1",
+        "name": "Shattering Glass",
+        "cost": 1,
+        "description": "Create purple astral cracks around the target.",
+        "actionCost": "Action"
+      }
+    ]
+  },
+  {
 ]
