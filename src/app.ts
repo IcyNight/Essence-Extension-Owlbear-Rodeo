@@ -18,7 +18,7 @@ import {
   selectConfluenceAreaShape,
   showConfluenceReminder,
 } from "./sdk/owlbear";
-import { onDataChange, readData, updateData, writeData } from "./sdk/storage";
+import { onDataChange, readData, updateData, withoutBundledLibrary, writeData } from "./sdk/storage";
 import { playerView } from "./ui/playerView";
 import { gmView } from "./ui/gmView";
 import { createBlankCharacter, saveCharacter, deleteCharacter, resetCharacterResources } from "./services/characterService";
@@ -589,7 +589,7 @@ export class EssencePowersApp {
   }
 
   private async exportData(): Promise<void> {
-    await navigator.clipboard?.writeText(JSON.stringify(this.state.data, null, 2));
+    await navigator.clipboard?.writeText(JSON.stringify(withoutBundledLibrary(this.state.data), null, 2));
     this.setMessage("Data copied to clipboard.");
   }
 

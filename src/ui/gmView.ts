@@ -1,7 +1,7 @@
 import { Character, Confluence, Essence, EssenceData, PlayerInfo, Power } from "../data/schema";
 import { createBlankCharacter } from "../services/characterService";
-import { createBlankConfluence, createBlankConfluencePower } from "../services/confluenceService";
-import { createBlankEssence, createBlankPower } from "../services/essenceService";
+import { createBlankConfluence } from "../services/confluenceService";
+import { createBlankEssence } from "../services/essenceService";
 import { escapeHtml } from "./dom";
 
 function option(value: string, label: string, selected?: boolean): string {
@@ -69,46 +69,31 @@ function characterForm(data: EssenceData, players: PlayerInfo[], character: Char
   `;
 }
 
-function powerFields(power: Power, index: number): string {
+function powerSummary(power: Power): string {
   return `
-    <fieldset class="power-edit" data-power-index="${index}">
-      <input type="hidden" name="powerId:${index}" value="${escapeHtml(power.id)}" />
-      <div class="grid two">
-        <label>Power Name<input name="powerName:${index}" required value="${escapeHtml(power.name)}" /></label>
-        <label>Cost<input name="powerCost:${index}" type="number" min="0" value="${power.cost}" /></label>
+    <article class="library-power">
+      <div class="library-power-head">
+        <h4>${escapeHtml(power.name)}</h4>
+        <span>Cost ${power.cost}</span>
       </div>
-      <label>Description<textarea name="powerDescription:${index}" rows="3">${escapeHtml(power.description)}</textarea></label>
-      <div class="grid two">
-        <label>Activation<input name="powerActivation:${index}" value="${escapeHtml(power.activation ?? "")}" /></label>
-        <label>Notes<input name="powerNotes:${index}" value="${escapeHtml(power.notes ?? "")}" /></label>
-      </div>
-      <div class="button-row compact">
-        <button class="secondary" type="button" data-action="move-power" data-index="${index}" data-dir="-1">Up</button>
-        <button class="secondary" type="button" data-action="move-power" data-index="${index}" data-dir="1">Down</button>
-        <button class="danger" type="button" data-action="remove-power" data-index="${index}">Delete Power</button>
-      </div>
-    </fieldset>
+      ${power.activation ? `<p class="muted">Action Cost: ${escapeHtml(power.activation)}</p>` : ""}
+      <p>${escapeHtml(power.description)}</p>
+    </article>
   `;
 }
 
-function libraryForm(kind: "essence" | "confluence", item?: Essence | Confluence): string {
-  const current = item ?? (kind === "essence" ? createBlankEssence() : createBlankConfluence());
-  const addPower = kind === "essence" ? createBlankPower : createBlankConfluencePower;
-  const powers = current.powers.length ? current.powers : [addPower()];
+function libraryDetails(kind: "essence" | "confluence", item?: Essence | Confluence): string {
+  if (!item) {
+    return `<section class="editor"><p class="empty">Add ${kind === "essence" ? "essences" : "confluences"} to the repo JSON file.</p></section>`;
+  }
   return `
-    <form class="editor" data-form="${kind}">
-      <input type="hidden" name="id" value="${escapeHtml(current.id)}" />
-      <label>Name<input name="name" required value="${escapeHtml(current.name)}" /></label>
-      <label>Summary<textarea name="summary" rows="2">${escapeHtml(current.summary ?? "")}</textarea></label>
+    <section class="editor">
+      <h3>${escapeHtml(item.name)}</h3>
+      <p class="muted">Loaded from repo file: <code>src/data/library/${kind === "essence" ? "essences" : "confluences"}.json</code></p>
       <div class="power-list">
-        ${powers.map((power, index) => powerFields(power, index)).join("")}
+        ${item.powers.length ? item.powers.map((power) => powerSummary(power)).join("") : `<p class="empty">No powers in this entry.</p>`}
       </div>
-      <div class="button-row">
-        <button class="secondary" type="button" data-action="add-power">Add Power</button>
-        <button class="primary" type="submit">Save ${kind === "essence" ? "Essence" : "Confluence"}</button>
-        <button class="danger" type="button" data-action="delete-${kind}" data-id="${escapeHtml(current.id)}">Delete</button>
-      </div>
-    </form>
+    </section>
   `;
 }
 
@@ -123,8 +108,9 @@ export function gmView(
 ): string {
   const active = tab || "characters";
   const character = selectedId ? data.characters[selectedId] : draftCharacter;
-  const essence = selectedId ? data.essences[selectedId] ?? draftEssence : draftEssence;
-  const confluence = selectedId ? data.confluences[selectedId] ?? draftConfluence : draftConfluence;
+  const essence = selectedId && data.essences[selectedId] ? data.essences[selectedId] : Object.values(data.essences)[0];
+  const confluence =
+    selectedId && data.confluences[selectedId] ? data.confluences[selectedId] : Object.values(data.confluences)[0];
 
   return `
     <section class="gm-panel">
@@ -163,8 +149,8 @@ export function gmView(
                       item.id === selectedId ? "active" : ""
                     }">${escapeHtml(item.name)}</button>`,
                 )
-                .join("")}<button type="button" data-select="" class="new">New Essence</button></aside>
-              ${libraryForm("essence", essence)}
+                .join("")}</aside>
+              ${libraryDetails("essence", essence)}
             </div>`
           : ""
       }
@@ -178,13 +164,12 @@ export function gmView(
                       item.id === selectedId ? "active" : ""
                     }">${escapeHtml(item.name)}</button>`,
                 )
-                .join("")}<button type="button" data-select="" class="new">New Confluence</button></aside>
-              ${libraryForm("confluence", confluence)}
+                .join("")}</aside>
+              ${libraryDetails("confluence", confluence)}
             </div>`
           : ""
       }
       <div class="button-row">
-        <button class="secondary" type="button" data-action="load-sample">Load Sample Data</button>
         <button class="secondary" type="button" data-action="export-data">Export Data</button>
         <button class="danger" type="button" data-action="clear-data">Clear Data</button>
       </div>

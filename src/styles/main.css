@@ -385,6 +385,35 @@ p {
   border-radius: 6px;
 }
 
+.library-power {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.65rem 0;
+  border-top: 1px solid rgba(109, 81, 61, 0.7);
+}
+
+.library-power:first-child {
+  border-top: 0;
+}
+
+.library-power-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.library-power-head h4,
+.library-power p {
+  margin-bottom: 0;
+}
+
+.library-power-head span,
+.muted {
+  color: #d8a24b;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 560px) {
   .app-shell {
     padding: 0.75rem;

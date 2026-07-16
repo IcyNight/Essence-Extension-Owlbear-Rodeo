@@ -1,0 +1,25 @@
+[
+  {
+    "id": "fire",
+    "name": "Fire",
+    "powers": [
+      {
+        "id": "fire-resistance",
+        "name": "Fire Resistance",
+        "cost": 1,
+        "description": "Use your reaction to halve incoming fire damage.",
+        "actionCost": "Reaction"
+      }
+    ]
+  },
+  {
+    "id": "metal",
+    "name": "Metal",
+    "powers": []
+  },
+  {
+    "id": "rune",
+    "name": "Rune",
+    "powers": []
+  }
+]

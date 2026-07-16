@@ -1,0 +1,15 @@
+[
+  {
+    "id": "astral-forge",
+    "name": "Astral Forge",
+    "powers": [
+      {
+        "id": "shattering-glass",
+        "name": "Shattering Glass",
+        "cost": 1,
+        "description": "Create purple astral cracks around the target.",
+        "actionCost": "Action"
+      }
+    ]
+  }
+]

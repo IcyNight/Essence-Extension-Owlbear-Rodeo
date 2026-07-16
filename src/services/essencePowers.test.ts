@@ -200,10 +200,11 @@ describe("permissions", () => {
 });
 
 describe("migration and deletion warnings", () => {
-  it("migrates invalid data into a safe current shape", () => {
+  it("migrates saved data with the bundled repo library", () => {
     const migrated = migrateData({ essences: { bad: { id: "bad", name: "Bad", powers: [{ cost: -3 }] } } });
     expect(migrated.version).toBe(1);
-    expect(migrated.essences.bad.powers).toEqual([]);
+    expect(migrated.essences.fire.name).toBe("Fire");
+    expect(migrated.essences.bad).toBeUndefined();
   });
 
   it("preserves confluence names in notifications", () => {

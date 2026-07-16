@@ -52,6 +52,35 @@ In Owlbear Rodeo, open your profile/extensions area, add a custom extension, and
 
 This project includes `.github/workflows/deploy-pages.yml`. Push the project to the `main` branch of `IcyNight/Essence-Extension-Owlbear-Rodeo`, then enable GitHub Pages with **GitHub Actions** as the source in the repository settings. Each push to `main` runs tests, builds the extension, and publishes `dist`.
 
+## File-Based Power Library
+
+Essence and confluence libraries are bundled from repo files instead of being saved into Owlbear room metadata:
+
+```text
+src/data/library/essences.json
+src/data/library/confluences.json
+```
+
+Each entry uses this shape:
+
+```json
+{
+  "id": "fire",
+  "name": "Fire",
+  "powers": [
+    {
+      "id": "fire-resistance",
+      "name": "Fire Resistance",
+      "cost": 1,
+      "description": "Use your reaction to halve incoming fire damage.",
+      "actionCost": "Reaction"
+    }
+  ]
+}
+```
+
+After changing either JSON file, commit and push the repo so GitHub Pages rebuilds the extension. The GM can then assign those essences and confluences from the character editor.
+
 ## Shared Data
 
 Main campaign data is stored in Owlbear Rodeo room metadata under:
@@ -60,9 +89,9 @@ Main campaign data is stored in Owlbear Rodeo room metadata under:
 com.codex.essence-powers/data
 ```
 
-The data includes essences, confluences, powers, characters, ownership, visibility, token IDs, current resources, and maximum resources. Local storage is used only for the GM's last-opened tab.
+The data includes characters, ownership, visibility, token IDs, current resources, maximum resources, active confluence areas, and confluence notifications. Local storage is used only for the GM's last-opened tab and notification bookkeeping.
 
-Owlbear Rodeo room metadata is intended for small extension data and is documented with a 16KB total room metadata limit. Very large power libraries may eventually need a different storage strategy.
+Owlbear Rodeo room metadata is intended for small extension data and is documented with a 16KB total room metadata limit. The essence and confluence libraries are therefore bundled from repo JSON files instead of stored in room metadata.
 
 ## Permissions and Security
 
@@ -74,14 +103,13 @@ Known limitation: Owlbear Rodeo metadata is client-accessible. This extension im
 
 ## GM Workflow
 
-1. Open the **Essence Library** tab.
-2. Create an essence, add powers, costs, activation text, and notes.
-3. Open the **Confluence Library** tab and do the same for confluences.
-4. Open **Characters**.
-5. Create a character, choose an owner from connected Owlbear players, assign up to three unique essences and one confluence, set maximum/current resources, and toggle **Visible to Players**.
-6. To connect a token, select a scene token in Owlbear Rodeo and press **Use Selected Token** in the character editor.
+1. Edit `src/data/library/essences.json` and `src/data/library/confluences.json` in the repo.
+2. Commit and push the repo so GitHub Pages rebuilds the extension.
+3. Open **Characters**.
+4. Create a character, choose an owner from connected Owlbear players, assign up to three unique essences and one confluence, set maximum/current resources, and toggle **Visible to Players**.
+5. To connect a token, select a scene token in Owlbear Rodeo and press **Use Selected Token** in the character editor.
 
-The GM can reset a character's resources, delete records, load sample data, export shared data to the clipboard, or clear all extension data for debugging.
+The GM can reset a character's resources, delete records, export shared data to the clipboard, or clear all extension data for debugging.
 
 ## Player Workflow
 
@@ -96,18 +124,12 @@ Confluence Uses: current / maximum
 
 The minus and plus buttons adjust current resources within `0..max`. **LR** asks for confirmation, then restores both resources to maximum.
 
-## Sample Data
-
-The GM-only **Load Sample Data** button adds Fire, Metal, Rune, and Astral Forge examples. It does not run automatically, so existing campaign data is not overwritten by startup.
-
 ## Manual Test Checklist
 
 ### GM test
 
-- Create essence.
-- Add essence power.
-- Create confluence.
-- Add confluence power.
+- Confirm repo essences appear in the Essence Library tab.
+- Confirm repo confluences appear in the Confluence Library tab.
 - Create character.
 - Assign 3 essences.
 - Assign confluence.
