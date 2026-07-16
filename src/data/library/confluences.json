@@ -7,7 +7,7 @@
         "id": "catalytic-domain",
         "name": "Catalytic Domain",
         "cost": 1,
-        "description": "Manipulate ambiant magic in a 15ft radius for 1 minute. Choose one of the following effects: VITAL SURGE- Allies gaint Temporary HP equals to your level x 5 (this effect doesn't stack with existing temp hp and is lost upon leaving the area). ENTROPIC SURGE- Enemies ending their turn in the area must make a Constitution saving throw, Failure= your level Necrotic Damage, Success= Half Damag. SPECIAL PROPERTY: Necrotic Resistance is ignored and Immunity is treated as Resistance. PASSIVE EFFECTS: MAGIAL STABILITY SENSE- You can naturally sense the stability of magic around you, unless it has been intentionally concealed. You instinctively perceive stable magic, unstable magic, magic on the verge of collapse, corrupted structures, and dangerous fluctuations (Does not reveal the cause—only that something is wrong). STABILIZING PRESENCE- Magic has a much harder time going wild or destabilizing around you. Rituals, spells, ambient magic, and magical devices are more stable(**Exception:** If you become involved in an ongoing magical transformation, your presence can alter the process itself).",
+        "description": "You are a stabilizing force for volatile magic, shaping ambient power before it breaks loose. Manipulate ambient magic in a 15-foot radius for 1 minute. Choose one of the following effects: VITAL SURGE - Allies in the area gain Temporary HP equal to your level x 5. This does not stack with existing Temporary HP, and the Temporary HP is lost when a creature leaves the area. ENTROPIC SURGE - Enemies that end their turn in the area must make a Constitution Saving Throw. Failure: The enemy suffers Necrotic damage equal to your level. Success: The enemy suffers half damage. Special Property: Necrotic Resistance is ignored, and Necrotic Immunity is treated as Resistance. PASSIVE EFFECTS: MAGICAL STABILITY SENSE - You can naturally sense the stability of magic around you, unless it has been intentionally concealed. You instinctively perceive stable magic, unstable magic, magic on the verge of collapse, corrupted magical structures, and dangerous magical fluctuations. This reveals that something is wrong, but not the cause. STABILIZING PRESENCE - Magic has a much harder time going wild or destabilizing around you. Rituals, spells, ambient magic, and magical devices are more stable in your presence. Exception: If you become involved in an ongoing magical transformation, your presence can alter the process itself.",
         "actionCost": "Action"
       }
     ]
@@ -17,10 +17,10 @@
     "name": "Nova",
     "powers": [
       {
-        "id": "nova1",
-        "name": "Shattering Glass",
+        "id": "solar-aegis",
+        "name": "Solar Aegis",
         "cost": 1,
-        "description": "Create purple astral cracks around the target.",
+        "description": "You are a vessel of stellar light and unyielding heat. Choose one of the following effects: SOLAR RETRIBUTION - Whenever an enemy misses a melee attack against you, the attacker must make a Dexterity Saving Throw (DC = your level + 10). Failure: The attacker suffers Fire damage equal to your level and Radiant damage equal to your level. Success: The attacker suffers half of both damage types, rounded up. BLAZING CHALLENGE - As a Reaction, after an enemy declares an attack against you but before the attack roll is made, you may reduce your AC by 2 until the start of your next turn. While this penalty is active, all Fire and Radiant damage dealt by Solar Retribution is doubled. PASSIVE EFFECTS: LIGHT OF RECOVERY - When not in combat, sick creatures near the user gain advantage on checks or saving throws made to overcome illness and recover. SENSE MALICE - The user can instinctively sense malicious intent from creatures of a lower rank. Detects intent, not thoughts. Does not reveal who is malicious if multiple creatures are present. Does not trigger on friendly sparring or harmless pranks. Works only against creatures of a lower rank. A skilled higher-ranked individual can conceal hostile intent.",
         "actionCost": "Action"
       }
     ]
