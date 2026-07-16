@@ -92,8 +92,7 @@ function powerFields(power: Power, index: number): string {
 }
 
 function libraryForm(kind: "essence" | "confluence", item?: Essence | Confluence): string {
-  const blank = kind === "essence" ? createBlankEssence() : createBlankConfluence();
-  const current = item ?? blank;
+  const current = item ?? (kind === "essence" ? createBlankEssence() : createBlankConfluence());
   const addPower = kind === "essence" ? createBlankPower : createBlankConfluencePower;
   const powers = current.powers.length ? current.powers : [addPower()];
   return `
@@ -119,11 +118,13 @@ export function gmView(
   tab: string,
   selectedId: string | null,
   draftCharacter: Character = createBlankCharacter(),
+  draftEssence: Essence = createBlankEssence(),
+  draftConfluence: Confluence = createBlankConfluence(),
 ): string {
   const active = tab || "characters";
   const character = selectedId ? data.characters[selectedId] : draftCharacter;
-  const essence = selectedId ? data.essences[selectedId] : undefined;
-  const confluence = selectedId ? data.confluences[selectedId] : undefined;
+  const essence = selectedId ? data.essences[selectedId] ?? draftEssence : draftEssence;
+  const confluence = selectedId ? data.confluences[selectedId] ?? draftConfluence : draftConfluence;
 
   return `
     <section class="gm-panel">

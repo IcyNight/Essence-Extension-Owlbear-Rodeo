@@ -22,8 +22,13 @@ import { onDataChange, readData, updateData, writeData } from "./sdk/storage";
 import { playerView } from "./ui/playerView";
 import { gmView } from "./ui/gmView";
 import { createBlankCharacter, saveCharacter, deleteCharacter, resetCharacterResources } from "./services/characterService";
-import { saveEssence, deleteEssence, createBlankPower } from "./services/essenceService";
-import { saveConfluence, deleteConfluence, createBlankConfluencePower } from "./services/confluenceService";
+import { saveEssence, deleteEssence, createBlankEssence, createBlankPower } from "./services/essenceService";
+import {
+  saveConfluence,
+  deleteConfluence,
+  createBlankConfluence,
+  createBlankConfluencePower,
+} from "./services/confluenceService";
 import {
   applyForgeRoundConfluenceTick,
   activateConfluence,
@@ -43,6 +48,8 @@ type AppState = {
   gmTab: string;
   selectedGmId: string | null;
   draftCharacter: Character;
+  draftEssence: Essence;
+  draftConfluence: Confluence;
   pendingTokenCharacterId: string | null;
   pendingConfluenceAreaCharacterId: string | null;
   lastForgeTurnTokenId: string | null;
@@ -73,6 +80,8 @@ export class EssencePowersApp {
       gmTab: localStorage.getItem("essence-powers.tab") ?? "characters",
       selectedGmId: null,
       draftCharacter: createBlankCharacter(),
+      draftEssence: createBlankEssence(),
+      draftConfluence: createBlankConfluence(),
       pendingTokenCharacterId: null,
       pendingConfluenceAreaCharacterId: null,
       lastForgeTurnTokenId: null,
@@ -174,9 +183,11 @@ export class EssencePowersApp {
                 this.state.data,
                 this.state.players,
                 this.state.gmTab,
-                this.state.selectedGmId,
-                this.state.draftCharacter,
-              )
+              this.state.selectedGmId,
+              this.state.draftCharacter,
+              this.state.draftEssence,
+              this.state.draftConfluence,
+            )
             : ""
         }
       </main>
@@ -201,6 +212,10 @@ export class EssencePowersApp {
       this.state.selectedGmId = button.dataset.select || null;
       if (!this.state.selectedGmId && this.state.gmTab === "characters") {
         this.state.draftCharacter = createBlankCharacter();
+      } else if (!this.state.selectedGmId && this.state.gmTab === "essences") {
+        this.state.draftEssence = createBlankEssence();
+      } else if (!this.state.selectedGmId && this.state.gmTab === "confluences") {
+        this.state.draftConfluence = createBlankConfluence();
       }
       this.render();
     });
@@ -479,9 +494,16 @@ export class EssencePowersApp {
   }
 
   private async saveLibraryForm(form: HTMLFormElement, kind: "essence" | "confluence"): Promise<void> {
+    const savedId = textValue(new FormData(form), "id");
     const next = await this.persistLibraryForm(form, kind);
     this.state.data = next;
-    this.state.selectedGmId = textValue(new FormData(form), "id");
+    this.state.selectedGmId = savedId;
+    if (kind === "essence" && this.state.draftEssence.id === savedId) {
+      this.state.draftEssence = createBlankEssence();
+    }
+    if (kind === "confluence" && this.state.draftConfluence.id === savedId) {
+      this.state.draftConfluence = createBlankConfluence();
+    }
     this.setMessage(`${kind === "essence" ? "Essence" : "Confluence"} saved.`);
   }
 
@@ -668,11 +690,21 @@ export class EssencePowersApp {
       summary: String(formData.get("summary") ?? ""),
       powers,
     };
-    this.state.data =
-      kind === "essence"
-        ? { ...this.state.data, essences: { ...this.state.data.essences, [item.id]: item } }
-        : { ...this.state.data, confluences: { ...this.state.data.confluences, [item.id]: item } };
-    this.state.selectedGmId = item.id;
+    const exists =
+      kind === "essence" ? Boolean(this.state.data.essences[item.id]) : Boolean(this.state.data.confluences[item.id]);
+    if (!exists && kind === "essence") {
+      this.state.draftEssence = item as Essence;
+      this.state.selectedGmId = null;
+    } else if (!exists) {
+      this.state.draftConfluence = item as Confluence;
+      this.state.selectedGmId = null;
+    } else {
+      this.state.data =
+        kind === "essence"
+          ? { ...this.state.data, essences: { ...this.state.data.essences, [item.id]: item } }
+          : { ...this.state.data, confluences: { ...this.state.data.confluences, [item.id]: item } };
+      this.state.selectedGmId = item.id;
+    }
     this.render();
   }
 }
