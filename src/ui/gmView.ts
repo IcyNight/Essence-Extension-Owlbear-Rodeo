@@ -153,6 +153,25 @@ function libraryDetails(kind: "essence" | "confluence", item?: Essence | Conflue
   `;
 }
 
+function picker<T extends { id: string; name: string }>(
+  label: string,
+  items: T[],
+  selectedId: string | null,
+  emptyLabel: string,
+  includeEmptyOption = false,
+): string {
+  const selected = selectedId && items.some((item) => item.id === selectedId) ? selectedId : "";
+  return `
+    <label class="manager-picker">${escapeHtml(label)}
+      <select data-select-menu ${items.length === 0 ? "disabled" : ""}>
+        ${items.length === 0 ? option("", emptyLabel, true) : ""}
+        ${items.length > 0 && includeEmptyOption ? option("", emptyLabel, !selected) : ""}
+        ${items.map((item) => option(item.id, item.name, item.id === selected)).join("")}
+      </select>
+    </label>
+  `;
+}
+
 export function gmView(
   data: EssenceData,
   players: PlayerInfo[],
@@ -163,10 +182,13 @@ export function gmView(
   draftConfluence: Confluence = createBlankConfluence(),
 ): string {
   const active = tab || "characters";
-  const character = selectedId ? data.characters[selectedId] : draftCharacter;
-  const essence = selectedId && data.essences[selectedId] ? data.essences[selectedId] : Object.values(data.essences)[0];
+  const characters = Object.values(data.characters);
+  const essences = Object.values(data.essences);
+  const confluences = Object.values(data.confluences);
+  const character = selectedId ? data.characters[selectedId] ?? draftCharacter : draftCharacter;
+  const essence = selectedId && data.essences[selectedId] ? data.essences[selectedId] : essences[0];
   const confluence =
-    selectedId && data.confluences[selectedId] ? data.confluences[selectedId] : Object.values(data.confluences)[0];
+    selectedId && data.confluences[selectedId] ? data.confluences[selectedId] : confluences[0];
 
   return `
     <section class="gm-panel">
@@ -183,14 +205,10 @@ export function gmView(
       ${
         active === "characters"
           ? `<div class="manager">
-              <aside>${Object.values(data.characters)
-                .map(
-                  (item) =>
-                    `<button type="button" data-select="${escapeHtml(item.id)}" class="${
-                      item.id === selectedId ? "active" : ""
-                    }">${escapeHtml(item.name)}</button>`,
-                )
-                .join("")}<button type="button" data-select="" class="new">New Character</button></aside>
+              <div class="manager-toolbar">
+                ${picker("Character", characters, selectedId, "Select character", true)}
+                <button type="button" data-select="" class="secondary">New Character</button>
+              </div>
               ${characterForm(data, players, character)}
             </div>`
           : ""
@@ -198,14 +216,9 @@ export function gmView(
       ${
         active === "essences"
           ? `<div class="manager">
-              <aside>${Object.values(data.essences)
-                .map(
-                  (item) =>
-                    `<button type="button" data-select="${escapeHtml(item.id)}" class="${
-                      item.id === selectedId ? "active" : ""
-                    }">${escapeHtml(item.name)}</button>`,
-                )
-                .join("")}</aside>
+              <div class="manager-toolbar">
+                ${picker("Essence", essences, selectedId, "No essences")}
+              </div>
               ${libraryDetails("essence", essence)}
             </div>`
           : ""
@@ -213,14 +226,9 @@ export function gmView(
       ${
         active === "confluences"
           ? `<div class="manager">
-              <aside>${Object.values(data.confluences)
-                .map(
-                  (item) =>
-                    `<button type="button" data-select="${escapeHtml(item.id)}" class="${
-                      item.id === selectedId ? "active" : ""
-                    }">${escapeHtml(item.name)}</button>`,
-                )
-                .join("")}</aside>
+              <div class="manager-toolbar">
+                ${picker("Confluence", confluences, selectedId, "No confluences")}
+              </div>
               ${libraryDetails("confluence", confluence)}
             </div>`
           : ""

@@ -60,7 +60,7 @@ type AppState = {
 };
 
 const SEEN_CONFLUENCE_NOTIFICATIONS_KEY = "essence-powers.seen-confluence-notifications";
-const CURRENT_EXTENSION_VERSION = "0.1.36";
+const CURRENT_EXTENSION_VERSION = "0.1.37";
 const LIVE_MANIFEST_URL = "https://icynight.github.io/Essence-Extension-Owlbear-Rodeo/manifest.json";
 
 type ExtensionManifest = {
@@ -216,6 +216,11 @@ export class EssencePowersApp {
   private bindEvents(): void {
     qs<HTMLSelectElement>(this.root, "#character-picker")?.addEventListener("change", (event) => {
       this.state.selectedCharacterId = (event.currentTarget as HTMLSelectElement).value;
+      this.render();
+    });
+
+    qs<HTMLSelectElement>(this.root, "[data-select-menu]")?.addEventListener("change", (event) => {
+      this.state.selectedGmId = (event.currentTarget as HTMLSelectElement).value || null;
       this.render();
     });
 
