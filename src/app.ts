@@ -60,11 +60,15 @@ type AppState = {
 };
 
 const SEEN_CONFLUENCE_NOTIFICATIONS_KEY = "essence-powers.seen-confluence-notifications";
-const CURRENT_EXTENSION_VERSION = "0.1.37";
+const CURRENT_EXTENSION_VERSION = "0.1.38";
 const LIVE_MANIFEST_URL = "https://icynight.github.io/Essence-Extension-Owlbear-Rodeo/manifest.json";
+const EXTENSION_HOSTS = new Set(["icynight.github.io", "localhost", "127.0.0.1"]);
 
 type ExtensionManifest = {
   version?: unknown;
+  action?: {
+    popover?: unknown;
+  };
 };
 
 function compareVersions(left: string, right: string): number {
@@ -77,6 +81,21 @@ function compareVersions(left: string, right: string): number {
     if (leftValue !== rightValue) return leftValue - rightValue;
   }
   return 0;
+}
+
+function getUpdateUrl(manifest: ExtensionManifest, latestVersion: string): string {
+  const currentUrl = new URL(window.location.href);
+  const latestPopover = typeof manifest.action?.popover === "string" ? manifest.action.popover : "";
+  const updateUrl = EXTENSION_HOSTS.has(currentUrl.hostname)
+    ? currentUrl
+    : latestPopover
+      ? new URL(latestPopover)
+      : null;
+
+  if (!updateUrl) throw new Error("Live manifest is missing the extension page.");
+  updateUrl.searchParams.set("v", latestVersion);
+  updateUrl.searchParams.set("t", String(Date.now()));
+  return updateUrl.toString();
 }
 
 export class EssencePowersApp {
@@ -621,7 +640,8 @@ export class EssencePowersApp {
       this.setMessage(`Already up to date (${CURRENT_EXTENSION_VERSION}).`);
       return;
     }
-    this.setMessage(`Version ${latestVersion} is available. Please refresh the page to see the new version.`);
+    this.setMessage(`Installing ${latestVersion}...`);
+    window.location.replace(getUpdateUrl(manifest, latestVersion));
   }
 
   private async useSelectedToken(characterId?: string): Promise<void> {
