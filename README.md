@@ -109,7 +109,7 @@ Known limitation: Owlbear Rodeo metadata is client-accessible. This extension im
 4. Create a character, choose an owner from connected Owlbear players, assign up to three unique essences and one confluence, set maximum/current resources, and toggle **Visible to Players**.
 5. To connect a token, select a scene token in Owlbear Rodeo and press **Use Selected Token** in the character editor.
 
-The GM can reset a character's resources, delete records, export shared data to the clipboard, or clear all extension data for debugging.
+The GM can reset a character's resources, delete records, or clear all extension data for debugging.
 
 ## Player Workflow
 

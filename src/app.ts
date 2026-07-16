@@ -18,7 +18,7 @@ import {
   selectConfluenceAreaShape,
   showConfluenceReminder,
 } from "./sdk/owlbear";
-import { onDataChange, readData, updateData, withoutBundledLibrary, writeData } from "./sdk/storage";
+import { onDataChange, readData, updateData, writeData } from "./sdk/storage";
 import { playerView } from "./ui/playerView";
 import { gmView } from "./ui/gmView";
 import { createBlankCharacter, saveCharacter, deleteCharacter, resetCharacterResources } from "./services/characterService";
@@ -241,7 +241,6 @@ export class EssencePowersApp {
       else if (action === "delete-confluence") await this.deleteConfluence(button.dataset.id);
       else if (action === "load-sample") await this.loadSampleData();
       else if (action === "clear-data") await this.clearData();
-      else if (action === "export-data") await this.exportData();
       else if (action === "selected-token") await this.useSelectedToken(button.dataset.target);
       else if (action === "add-power" || action === "remove-power" || action === "move-power") this.editPowerList(button);
     } catch (error) {
@@ -586,11 +585,6 @@ export class EssencePowersApp {
     if (!confirm("Clear all Essence Powers data for this room?")) return;
     await writeData(createEmptyData());
     this.setMessage("Shared data cleared.");
-  }
-
-  private async exportData(): Promise<void> {
-    await navigator.clipboard?.writeText(JSON.stringify(withoutBundledLibrary(this.state.data), null, 2));
-    this.setMessage("Data copied to clipboard.");
   }
 
   private async useSelectedToken(characterId?: string): Promise<void> {

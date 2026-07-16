@@ -89,7 +89,6 @@ function libraryDetails(kind: "essence" | "confluence", item?: Essence | Conflue
   return `
     <section class="editor">
       <h3>${escapeHtml(item.name)}</h3>
-      <p class="muted">Loaded from repo file: <code>src/data/library/${kind === "essence" ? "essences" : "confluences"}.json</code></p>
       <div class="power-list">
         ${item.powers.length ? item.powers.map((power) => powerSummary(power)).join("") : `<p class="empty">No powers in this entry.</p>`}
       </div>
@@ -170,7 +169,6 @@ export function gmView(
           : ""
       }
       <div class="button-row">
-        <button class="secondary" type="button" data-action="export-data">Export Data</button>
         <button class="danger" type="button" data-action="clear-data">Clear Data</button>
       </div>
     </section>
