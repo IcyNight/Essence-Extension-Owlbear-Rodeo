@@ -43,10 +43,36 @@
     "name": "Twilight",
     "powers": [
       {
-        "id": "twilight1",
-        "name": "Shattering Glass",
+        "id": "shadow-harvest",
+        "name": "Shadow Harvest",
         "cost": 1,
-        "description": "Create purple astral cracks around the target.",
+        "description": "Choose a number of enemies up to your level. Those targets gain a Shadow Parasite for 1 minute. ONCE PER LONG REST - This power can be used once per long rest. SHADOW RESONANCE - When you damage a creature carrying a Shadow Parasite, the target takes additional cold damage equal to your level. The additional cold damage ignores cold resistance. Cold immunity is treated as cold resistance. SPREADING TWILIGHT - All other creatures carrying a Shadow Parasite must make a Dexterity saving throw. On failure, they take cold damage equal to your level. On success, they take no damage. SPECIAL PROPERTIES - PRIMARY TARGET - A creature you damage directly takes cold damage that ignores cold resistance. Cold immunity is treated as cold resistance. SECONDARY TARGETS - Creatures affected by Spreading Twilight use cold resistance normally. Cold immunity is treated as cold resistance. PASSIVE EFFECTS: SHADOW COMMUNION - You can interact peacefully and nonviolently with shadows. You can touch, sense, and communicate with them in limited ways, and manipulate them without expending magic. DETACHED SHADOW - You can detach your own shadow from your body. It can move independently and perform one simple task at a time, but it cannot attack or directly harm creatures. It remains linked to you. Examples: retrieve an item, pull a lever, open an unlocked door, deliver a message, tap someone's shoulder, hold a lantern, or press a button. SHADOW'S GREED - A semi-reliable looting power that can loot dead creatures of your rank or higher. The stronger the Will the creature had in life, the higher the chance of loot. Roll 1d100 when attempting to loot. The DM assigns a Will modifier based on the creature's will in life. Add the modifier to your roll. The higher the total, the greater the chance of obtaining magical loot.",
+        "actionCost": "Action"
+      }
+    ]
+  },
+  {
+    "id": "fortress",
+    "name": "Fortress",
+    "powers": [
+      {
+        "id": "bastion-of-will",
+        "name": "Bastion of Will",
+        "cost": 1,
+        "description": "For 1 minute, you manifest a translucent castle wall protecting a 25 ft x 25 ft area behind you. ONCE PER LONG REST - This power can be used once per long rest. DEFENDING WILL - Ranged attacks against allies inside the area suffer a penalty to hit equal to your level divided by 5, rounded down. IMPENETRABLE ADVANCE - Enemies who enter the area have their movement speed halved.",
+        "actionCost": "Action"
+      }
+    ]
+  },
+  {
+    "id": "warden",
+    "name": "Warden",
+    "powers": [
+      {
+        "id": "threads-of-the-warden",
+        "name": "Threads of the Warden",
+        "cost": 1,
+        "description": "For 1 minute, you perceive and manipulate strings of causality within a 35 ft x 35 ft area centered on yourself. ONCE PER LONG REST - This power can be used once per long rest. GUIDED ARROW - Make ranged attacks against enemies within the area. These attacks ignore line of sight, cover, and obstacles. INTERCESSION - As a reaction, reduce damage from an incoming projectile targeting yourself or an ally by an amount equal to your level.",
         "actionCost": "Action"
       }
     ]

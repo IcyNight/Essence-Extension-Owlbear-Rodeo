@@ -60,7 +60,7 @@ type AppState = {
 };
 
 const SEEN_CONFLUENCE_NOTIFICATIONS_KEY = "essence-powers.seen-confluence-notifications";
-const CURRENT_EXTENSION_VERSION = "0.1.38";
+const CURRENT_EXTENSION_VERSION = "0.1.39";
 const LIVE_MANIFEST_URL = "https://icynight.github.io/Essence-Extension-Owlbear-Rodeo/manifest.json";
 const EXTENSION_HOSTS = new Set(["icynight.github.io", "localhost", "127.0.0.1"]);
 
