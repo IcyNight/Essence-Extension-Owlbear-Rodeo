@@ -30,10 +30,10 @@
     "name": "Astral Forge",
     "powers": [
       {
-        "id": "shattering-glass",
-        "name": "Shattering Glass",
+        "id": "astral-forge",
+        "name": "Astral Forge",
         "cost": 1,
-        "description": "Create purple astral cracks around the target.",
+        "description": "You channel astral energy into a target through consecutive successful strikes. Once per Long Rest. CONSECUTIVE HITS - 1st hit: Normal damage + 1 thunder damage. 2nd hit: Normal damage + 2 thunder damage. 3rd hit: Normal damage + 3 thunder damage. Continue increasing by +1 thunder damage per consecutive hit. The bonus thunder damage cannot exceed your level. SPECIAL PROPERTY - Thunder Resistance functions normally. Thunder Immunity is treated as Thunder Resistance. PASSIVE EFFECTS: PORTABLE SMITHY - You can manifest a complete mystical forge that only you can operate. You can use it to repair equipment, forge mundane and magical items, and work metal anywhere, provided you have the necessary materials. ORE SENSE - You can instinctively sense the presence of rare metals, valuable minerals, and magical ores nearby or underground. You do not automatically know the exact type or quantity, only that something valuable is present. RESONANCE DETONATION - If you miss an attack after reaching at least 3 consecutive successful hits, the accumulated energy detonates. Damage: your level x number of consecutive hits. Damage Type: Transcended Damage. Transcended Damage ignores resistance and immunity. The effect then ends.",
         "actionCost": "Action"
       }
     ]

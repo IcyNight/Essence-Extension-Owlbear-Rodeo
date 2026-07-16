@@ -19,6 +19,10 @@ const DESCRIPTION_HEADINGS = [
   "BLAZING CHALLENGE",
   "LIGHT OF RECOVERY",
   "SENSE MALICE",
+  "CONSECUTIVE HITS",
+  "PORTABLE SMITHY",
+  "ORE SENSE",
+  "RESONANCE DETONATION",
 ];
 
 function escapeRegex(value: string): string {
