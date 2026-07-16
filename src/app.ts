@@ -60,14 +60,11 @@ type AppState = {
 };
 
 const SEEN_CONFLUENCE_NOTIFICATIONS_KEY = "essence-powers.seen-confluence-notifications";
-const CURRENT_EXTENSION_VERSION = "0.1.35";
+const CURRENT_EXTENSION_VERSION = "0.1.36";
 const LIVE_MANIFEST_URL = "https://icynight.github.io/Essence-Extension-Owlbear-Rodeo/manifest.json";
 
 type ExtensionManifest = {
   version?: unknown;
-  action?: {
-    popover?: unknown;
-  };
 };
 
 function compareVersions(left: string, right: string): number {
@@ -614,16 +611,12 @@ export class EssencePowersApp {
     if (!response.ok) throw new Error("Unable to check for updates.");
     const manifest = (await response.json()) as ExtensionManifest;
     const latestVersion = typeof manifest.version === "string" ? manifest.version : "";
-    const latestPopover = typeof manifest.action?.popover === "string" ? manifest.action.popover : "";
-    if (!latestVersion || !latestPopover) throw new Error("Live manifest is missing update information.");
+    if (!latestVersion) throw new Error("Live manifest is missing update information.");
     if (compareVersions(latestVersion, CURRENT_EXTENSION_VERSION) <= 0) {
       this.setMessage(`Already up to date (${CURRENT_EXTENSION_VERSION}).`);
       return;
     }
-    const nextUrl = new URL(latestPopover);
-    nextUrl.searchParams.set("t", String(Date.now()));
-    this.setMessage(`Updating to ${latestVersion}...`);
-    window.location.href = nextUrl.toString();
+    this.setMessage(`Version ${latestVersion} is available. Please refresh the page to see the new version.`);
   }
 
   private async useSelectedToken(characterId?: string): Promise<void> {
